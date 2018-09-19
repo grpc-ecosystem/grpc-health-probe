@@ -1,0 +1,27 @@
+sudo: false
+language: go
+go:
+- 1.11.x
+go_import_path: github.com/grpc-ecosystem/grpc-health-probe
+git:
+  depth: 1
+install: true
+notifications:
+  email: false
+before_install:
+- go get -u github.com/mitchellh/gox
+- go get -u github.com/golang/dep/cmd/dep
+- dep ensure -vendor-only -v
+script:
+- gox -output='out/grpc_health_probe-{{.OS}}-{{.Arch}}' -rebuild -os=linux -arch="386 amd64" -tags netgo -ldflags=-w
+deploy:
+  on:
+    tags: true
+  provider: releases
+  file_glob: true
+  file: out/grpc_health_probe-*
+  skip_cleanup: true
+  options:
+    prerelease: true
+  api_key:
+    secure: "MT2E+Fep6autndkl0hyaTp+L21VqrBbA2kOsj03gLOsiL9vIDyOrXYu8OxVJHOG2ci2DK5GmIyOORzB5r3g4tOv/PInaQYrwf+tYhGdqNmMFc6uQmcXECFFtdcv8uhsY97ts7PKgFhT3E12yrYzKiZu86cfwOI6ZqYcTET4AFh1vYg/ji91dl0awLLa48E0loYMAN9+Y+COZWiH4YboJAs+TGsVIlTz4AZ3mZ0bJKAIlpmw3ZSZ5q9X9BGXq/gD010XHfK8D8P79fFT9hDrIz8Ioxrq9YFjAlxVzbijT/Vjeiem6Sim5q3+5Pn1NCLvDtkOUEy8ThlLKN5WLlouojOMxcTuCkjhaanLE45+USz6kKoj3bRPTOEWDYw8rZu808w/DnVFMRshvMapuBr/MTA5MK0Uth6muKz0bcWafo7Vw2J8yOy8ROC2MTXLcs6VGqcNNsm26fgpj/eGGSmjqSzQsEVk4G3gS1O42wqE/lCtLXsIfovz0ZKA32EOERSPfjNf3MEK9GybM10/T++iynjATpn9/6xFFFJktYBiqhE4zEIGx1fMATd/z9PMRaQLTtSFcO+9i4Cp4QiR84WikVEDJae37+jZlBiPi63Bh5MGHVXUMPR9m84V0GfYLbsSOMJ3QY69Cj8X1V/DIotHBVT5kshWKJ2myBYcj1UIYsSw="
