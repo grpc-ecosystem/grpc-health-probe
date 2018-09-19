@@ -63,8 +63,8 @@ You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```
-RUN GRPC_HEALTH_PROBE_VERSION=0.1.0 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 &&
+RUN GRPC_HEALTH_PROBE_VERSION=v0.1.0-alpha.1 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 &&
     chmod +x /bin/grpc_health_probe
 ```
 
