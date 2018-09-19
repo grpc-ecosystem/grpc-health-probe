@@ -34,7 +34,7 @@ Installing from source (not recommended)
 - Run: `go get github.com/grpc-ecosystem/grpc-health-probe`
 - This will compile the binary into your `$GOPATH/bin` (or `$HOME/go/bin`).
 
-## Implementing the gRPC Health Checking Protocol
+## Using the gRPC Health Checking Protocol
 
 To make use of the `grpc_health_probe`, your application must implement the
 [gRPC Health Checking Protocol v1][hc]. This means you must to register the
@@ -53,19 +53,6 @@ available for the languages supported by gRPC:
 Most of the languages listed above provide helper functions that hides
 impementation details. This eliminates the need for you to implement the `Check`
 rpc yourself.
-
-## Exit codes
-
-It is not recommended to rely on specific exit statuses other than zero versus
-non-zero.
-
-| Exit Code | Description |
-|:-----------:|-------------|
-| **0** | success: rpc response is `SERVING`. |
-| **1** | failure: invalid command-line arguments |
-| **2** | failure: connection failed or timed out |
-| **3** | failure: rpc failed or timed out |
-| **4** | failure: rpc successful, but the response is not `SERVING` |
 
 ## Example: gRPC health checking on Kubernetes
 
@@ -103,6 +90,59 @@ spec:
 
 This approach provide proper readiness/liveness checking to your applications
 that implement the [gRPC Health Checking Protocol][hc].
+
+## Health Checking TLS Servers
+
+If a gRPC server is serving traffic over TLS, or uses TLS client authentication
+to authorize clients, you can still use `grpc_health_probe` to check health
+with command-line options:
+
+| Option | Description |
+|:------------|-------------|
+| **`-tls`** | use TLS (default: false) |
+| **`-tls-ca-cert`** | path to file containing CA certificates (to override system root CAs) |
+| **`-tls-client-cert`** | client certificate for authenticating to the server |
+| **`-tls-client-key`** | private key for for authenticating to the server |
+| **`-tls-no-verify`** | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
+| **`-tls-server-name`** | override the hostname used to verify the server certificate |
+
+**Example:**
+
+1. Start the `route_guide` [example
+   server](https://github.com/grpc/grpc-go/tree/be59908d40f00be3573a50284c3863f1a37b8528/examples/route_guide)
+   with TLS by running:
+
+       go run server/server.go -tls
+
+2. Run `grpc_client_probe` with the [CA
+   certificate](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/ca.pem)
+   (in the `testdata/` directory) and hostname override the
+   [cert](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/server1.pem) is signed for:
+
+      ```sh
+      $ grpc_health_probe -addr 127.0.0.1:10000 \
+          -tls \
+          -tls-ca-cert /path/to/testdata/ca.pem \
+          -tls-server-name=x.test.youtube.com
+
+      status: SERVING
+      ```
+
+
+
+## Exit codes
+
+It is not recommended to rely on specific exit statuses other than zero versus
+non-zero.
+
+| Exit Code | Description |
+|:-----------:|-------------|
+| **0** | success: rpc response is `SERVING`. |
+| **1** | failure: invalid command-line arguments |
+| **2** | failure: connection failed or timed out |
+| **3** | failure: rpc failed or timed out |
+| **4** | failure: rpc successful, but the response is not `SERVING` |
+
 
 ----
 
