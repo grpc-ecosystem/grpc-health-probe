@@ -10,8 +10,8 @@
     "ptypes/duration",
     "ptypes/timestamp"
   ]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -25,13 +25,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "19491d39cadbd9cd33f26ca22cc89ba4ba38251c"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "acbc56fc7007d2a01796d5bde54f39e3b3e95945"
+  revision = "1561086e645b2809fb9f8a1e2a38160bf8d53bf4"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -58,7 +58,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
+  revision = "c3f76f3b92d1ffa4c58a9ff842a58b8877655e0f"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -97,6 +97,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2412139e724817e4b458758dc53f875c37aa9b8fcbdba6f36ddd1156d93417c2"
+  inputs-digest = "8b1a31d2671daa3c9dab969ea51263fb41fd1e1e46b1995fcb762043049b4457"
   solver-name = "gps-cdcl"
   solver-version = 1
