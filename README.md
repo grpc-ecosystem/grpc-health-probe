@@ -51,7 +51,7 @@ available for the languages supported by gRPC:
 [[Ruby](https://www.rubydoc.info/gems/grpc/Grpc/Health/Checker)] ...
 
 Most of the languages listed above provide helper functions that hides
-impementation details. This eliminates the need for you to implement the `Check`
+implementation details. This eliminates the need for you to implement the `Check`
 rpc yourself.
 
 ## Example: gRPC health checking on Kubernetes
