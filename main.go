@@ -43,6 +43,7 @@ var (
 	flTLSClientCert string
 	flTLSClientKey  string
 	flTLSServerName string
+	flVerbose       bool
 )
 
 const (
@@ -69,6 +70,7 @@ func init() {
 	flag.StringVar(&flTLSClientCert, "tls-client-cert", "", "(with -tls, optional) client certificate for authenticating to the server (requires -tls-client-key)")
 	flag.StringVar(&flTLSClientKey, "tls-client-key", "", "(with -tls) client private key for authenticating to the server (requires -tls-client-cert)")
 	flag.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
+	flag.BoolVar(&flVerbose, "v", false, "verbose logs")
 
 	flag.Parse()
 
@@ -110,15 +112,18 @@ func init() {
 	if flTLSNoVerify && flTLSServerName != "" {
 		argError("cannot specify -tls-server-name with -tls-no-verify (server name would not be used)")
 	}
-	log.Printf("config:")
-	log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
-	log.Printf("> tls=%v", flTLS)
-	if flTLS {
-		log.Printf("  > no-verify=%v ", flTLSNoVerify)
-		log.Printf("  > ca-cert=%s", flTLSCACert)
-		log.Printf("  > client-cert=%s", flTLSClientCert)
-		log.Printf("  > client-key=%s", flTLSClientKey)
-		log.Printf("  > server-name=%s", flTLSServerName)
+
+	if flVerbose {
+		log.Printf("parsed options:")
+		log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
+		log.Printf("> tls=%v", flTLS)
+		if flTLS {
+			log.Printf("  > no-verify=%v ", flTLSNoVerify)
+			log.Printf("  > ca-cert=%s", flTLSCACert)
+			log.Printf("  > client-cert=%s", flTLSClientCert)
+			log.Printf("  > client-key=%s", flTLSClientKey)
+			log.Printf("  > server-name=%s", flTLSServerName)
+		}
 	}
 }
 
@@ -166,7 +171,9 @@ func main() {
 			return
 		}
 	}()
-	log.Printf("establishing connection")
+	if flVerbose {
+		log.Printf("establishing connection")
+	}
 
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent("grpc_health_probe"),
@@ -209,6 +216,8 @@ func main() {
 		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
 		os.Exit(StatusUnhealthy)
 	}
-	log.Printf("time elapsed: connect=%v rpc=%v", connDuration, rpcDuration)
+	if flVerbose {
+		log.Printf("time elapsed: connect=%v rpc=%v", connDuration, rpcDuration)
+	}
 	log.Printf("status: %v", resp.GetStatus().String())
 }
