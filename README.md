@@ -40,8 +40,8 @@ To make use of the `grpc_health_probe`, your application must implement the
 [gRPC Health Checking Protocol v1][hc]. This means you must to register the
 `Health` service and implement the `rpc Check` that returns a `SERVING` status.
 
-Since the Health Checking protocol is part of the gRPC core, it has packages/libraries
-available for the languages supported by gRPC:
+Since the Health Checking protocol is part of the gRPC core, it has
+packages/libraries available for the languages supported by gRPC:
 
 [[health.proto](https://github.com/grpc/grpc/blob/master/src/proto/grpc/health/v1/health.proto)]
 [[Go](https://godoc.org/google.golang.org/grpc/health/grpc_health_v1)]
@@ -51,8 +51,8 @@ available for the languages supported by gRPC:
 [[Ruby](https://www.rubydoc.info/gems/grpc/Grpc/Health/Checker)] ...
 
 Most of the languages listed above provide helper functions that hides
-impementation details. This eliminates the need for you to implement the `Check`
-rpc yourself.
+implementation details. This eliminates the need for you to implement the
+`Check` rpc yourself.
 
 ## Example: gRPC health checking on Kubernetes
 
@@ -128,12 +128,10 @@ with command-line options:
       status: SERVING
       ```
 
-
-
 ## Exit codes
 
-It is not recommended to rely on specific exit statuses other than zero versus
-non-zero.
+It is not recommended to rely on specific exit statuses. Any failure will be
+a non-zero exit code.
 
 | Exit Code | Description |
 |:-----------:|-------------|
@@ -143,9 +141,7 @@ non-zero.
 | **3** | failure: rpc failed or timed out |
 | **4** | failure: rpc successful, but the response is not `SERVING` |
 
-
 ----
-
 This is not an official Google project.
 
 [hc]: https://github.com/grpc/grpc/blob/master/doc/health-checking.md
