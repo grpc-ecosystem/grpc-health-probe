@@ -25,6 +25,9 @@ import (
 	"os/signal"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -193,7 +196,11 @@ func main() {
 	defer rpcCancel()
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{})
 	if err != nil {
-		log.Printf("health check rpc failed: %+v", err)
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
+			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
+		} else {
+			log.Printf("error: health rpc failed: %+v", err)
+		}
 		os.Exit(StatusRPCFailure)
 	}
 	rpcDuration := time.Since(rpcStart)
