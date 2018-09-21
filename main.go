@@ -191,7 +191,11 @@ func main() {
 	connStart := time.Now()
 	conn, err := grpc.DialContext(ctx, flAddr, opts...)
 	if err != nil {
-		log.Printf("failed to connect service at %q: %+v", flAddr, err)
+		if err == context.DeadlineExceeded {
+			log.Printf("timeout: failed to connect service %q within %v", flAddr, flConnTimeout)
+		} else {
+			log.Printf("error: failed to connect service at %q: %+v", flAddr, err)
+		}
 		os.Exit(StatusConnectionFailure)
 	}
 	connDuration := time.Since(connStart)
@@ -204,6 +208,8 @@ func main() {
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
 			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
+		} else if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
+			log.Printf("timeout: health rpc did not complete within %v", flRPCTimeout)
 		} else {
 			log.Printf("error: health rpc failed: %+v", err)
 		}
