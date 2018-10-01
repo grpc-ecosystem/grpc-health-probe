@@ -18,7 +18,7 @@ healthy: SERVING
 ```
 
 ```text
-$ grpc_health_probe -addr=localhost:9999 -conn-timeout 250ms -rpc-timeout 100ms
+$ grpc_health_probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
 failed to connect service at "localhost:9999": context deadline exceeded
 exit status 2
 ```
