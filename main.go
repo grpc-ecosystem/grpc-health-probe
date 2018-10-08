@@ -34,6 +34,7 @@ import (
 
 var (
 	flAddr          string
+	flService       string
 	flConnTimeout   time.Duration
 	flRPCTimeout    time.Duration
 	flTLS           bool
@@ -59,6 +60,7 @@ const (
 func init() {
 	log.SetFlags(0)
 	flag.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
+	flag.StringVar(&flService, "service", "", "service name to check (default: \"\")")
 	// timeouts
 	flag.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
 	flag.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
@@ -204,7 +206,7 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
-	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{})
+	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{Service: flService})
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
 			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
