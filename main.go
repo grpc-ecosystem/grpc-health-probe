@@ -92,6 +92,7 @@ func init() {
 	if !flTLS && flTLSNoVerify {
 		argError("specified -tls-no-verify without specifying -tls")
 	}
+
 	if !flTLS && flTLSCACert != "" {
 		argError("specified -tls-ca-cert without specifying -tls")
 	}
@@ -132,14 +133,23 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 	var cfg tls.Config
 
 	if clientCert != "" && clientKey != "" {
+		if flVerbose {
+			log.Printf("loading key pair %s", clientKey)
+		}
 		keyPair, err := tls.LoadX509KeyPair(clientCert, clientKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load tls client cert/key pair. error=%v", err)
+		}
+		if flVerbose {
+			log.Printf("key pair is %v", keyPair)
 		}
 		cfg.Certificates = []tls.Certificate{keyPair}
 	}
 
 	if skipVerify {
+		if flVerbose {
+			log.Printf("skipVerify")
+		}
 		cfg.InsecureSkipVerify = true
 	} else if caCerts != "" {
 		// override system roots
@@ -148,12 +158,18 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 		if err != nil {
 			return nil, fmt.Errorf("failed to load root CA certificates from file (%s) error=%v", caCerts, err)
 		}
+		if flVerbose {
+			log.Printf("Override system roots. new certs: %s", pem)
+		}
 		if !rootCAs.AppendCertsFromPEM(pem) {
 			return nil, fmt.Errorf("no root CA certs parsed from file %s", caCerts)
 		}
 		cfg.RootCAs = rootCAs
 	}
 	if serverName != "" {
+		if flVerbose {
+			log.Printf("Existing servername %s", serverName)
+		}
 		cfg.ServerName = serverName
 	}
 	return credentials.NewTLS(&cfg), nil
@@ -165,6 +181,9 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
+		if flVerbose {
+			log.Printf("Running go function")
+		}
 		sig := <-c
 		if sig == os.Interrupt {
 			log.Printf("cancellation received")
@@ -181,6 +200,9 @@ func main() {
 		grpc.WithBlock(),
 		grpc.WithTimeout(flConnTimeout)}
 	if flTLS {
+		if flVerbose {
+			log.Printf("Using TLS  %v, %v, %v, %v", flTLSNoVerify, flTLSClientKey, flTLSClientCert, flTLSServerName)
+		}
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials. error=%v", err)
@@ -191,6 +213,9 @@ func main() {
 		opts = append(opts, grpc.WithInsecure())
 	}
 	connStart := time.Now()
+	if flVerbose {
+		log.Printf("Starting connection, time:  %s", connStart)
+	}
 	conn, err := grpc.DialContext(ctx, flAddr, opts...)
 	if err != nil {
 		if err == context.DeadlineExceeded {
@@ -206,6 +231,9 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
+	if flVerbose {
+		log.Printf("calling rpc server %v, ", conn)
+	}
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{Service: flService})
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
@@ -219,6 +247,9 @@ func main() {
 	}
 	rpcDuration := time.Since(rpcStart)
 
+	if flVerbose {
+		log.Printf("respionse: %s", resp)
+	}
 	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
 		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
 		os.Exit(StatusUnhealthy)
