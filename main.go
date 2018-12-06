@@ -25,6 +25,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -234,7 +235,9 @@ func main() {
 	if flVerbose {
 		log.Printf("calling rpc server %v, ", conn)
 	}
+	spew.Dump(flService)
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{Service: flService})
+	spew.Dump(resp, err)
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
 			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
