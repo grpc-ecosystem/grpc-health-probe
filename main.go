@@ -200,9 +200,6 @@ func main() {
 		grpc.WithBlock(),
 		grpc.WithTimeout(flConnTimeout)}
 	if flTLS {
-		if flVerbose {
-			log.Printf("Using TLS  %v, %v, %v, %v", flTLSNoVerify, flTLSClientKey, flTLSClientCert, flTLSServerName)
-		}
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials. error=%v", err)
@@ -248,7 +245,7 @@ func main() {
 	rpcDuration := time.Since(rpcStart)
 
 	if flVerbose {
-		log.Printf("respionse: %s", resp)
+		log.Printf("response: %s", resp)
 	}
 	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
 		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
