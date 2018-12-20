@@ -10,10 +10,8 @@ notifications:
   email: false
 before_install:
 - go get -u github.com/mitchellh/gox
-- go get -u github.com/golang/dep/cmd/dep
-- dep ensure -vendor-only -v
 script:
-- gox -output='out/grpc_health_probe-{{.OS}}-{{.Arch}}' -rebuild -os=linux -arch="386 amd64" -tags netgo -ldflags=-w
+- env -u GOPATH gox -output='out/grpc_health_probe-{{.OS}}-{{.Arch}}' -rebuild -os=linux -arch="386 amd64" -tags netgo -ldflags=-w
 deploy:
   on:
     tags: true

@@ -1,12 +1,11 @@
-FROM golang:1.10 AS build
-
-ENV PROJECT github.com/grpc-ecosystem/grpc_health_probe
-WORKDIR /go/src/$PROJECT
+FROM golang:1.11 AS build
+ENV PROJECT grpc_health_probe
+WORKDIR /src/$PROJECT
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN go get -u github.com/golang/dep/cmd/dep && \
-    dep ensure -vendor-only -v
-RUN go install -a -tags netgo -ldflags "-linkmode external -extldflags -static"
+RUN CGO_ENABLED=0 go install -a -tags netgo -ldflags=-w
 
-FROM alpine:latest
-COPY --from=build /go/bin/grpc_health_probe /bin/grpc_health_probe
+FROM alpine:3.8
+COPY --from=build /go/bin/grpc-health-probe /bin/grpc_health_probe
 ENTRYPOINT [ "/bin/grpc_health_probe" ]
