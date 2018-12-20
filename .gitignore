@@ -3,9 +3,6 @@ grpc_health_probe
 grpc-health-probe
 out/
 
-#vendor
-vendor/
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
