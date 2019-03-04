@@ -172,14 +172,10 @@ func main() {
 			return
 		}
 	}()
-	if flVerbose {
-		log.Printf("establishing connection")
-	}
 
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent("grpc_health_probe"),
-		grpc.WithBlock(),
-		grpc.WithTimeout(flConnTimeout)}
+		grpc.WithBlock()}
 	if flTLS {
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
@@ -190,8 +186,14 @@ func main() {
 	} else {
 		opts = append(opts, grpc.WithInsecure())
 	}
+
+	if flVerbose {
+		log.Print("establishing connection")
+	}
 	connStart := time.Now()
-	conn, err := grpc.DialContext(ctx, flAddr, opts...)
+	dialCtx, cancel2 := context.WithTimeout(ctx, flConnTimeout)
+	defer cancel2()
+	conn, err := grpc.DialContext(dialCtx, flAddr, opts...)
 	if err != nil {
 		if err == context.DeadlineExceeded {
 			log.Printf("timeout: failed to connect service %q within %v", flAddr, flConnTimeout)
@@ -202,6 +204,9 @@ func main() {
 	}
 	connDuration := time.Since(connStart)
 	defer conn.Close()
+	if flVerbose {
+		log.Printf("connection establisted (took %v)", connDuration)
+	}
 
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
