@@ -21,8 +21,10 @@ import (
 	"os/signal"
 	"time"
 
-	"google.golang.org/grpc"
+	"github.com/grpc-ecosystem/grpc-health-probe/internal/probe"
+
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 )
@@ -137,33 +139,23 @@ func main() {
 		}
 	}()
 
-	opts := []grpc.DialOption{
-		grpc.WithUserAgent("grpc_health_probe"),
-		grpc.WithBlock()}
+	var creds credentials.TransportCredentials
 	if flTLS {
-		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
+		c, err := probe.BuildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials. error=%v", err)
 			os.Exit(StatusInvalidArguments)
 		}
-		opts = append(opts, grpc.WithTransportCredentials(creds))
-	} else {
-		opts = append(opts, grpc.WithInsecure())
+		creds = c
 	}
 
 	if flVerbose {
 		log.Print("establishing connection")
 	}
 	connStart := time.Now()
-	dialCtx, cancel2 := context.WithTimeout(ctx, flConnTimeout)
-	defer cancel2()
-	conn, err := grpc.DialContext(dialCtx, flAddr, opts...)
+	conn, err := probe.Connect(ctx, flAddr, creds, flConnTimeout)
 	if err != nil {
-		if err == context.DeadlineExceeded {
-			log.Printf("timeout: failed to connect service %q within %v", flAddr, flConnTimeout)
-		} else {
-			log.Printf("error: failed to connect service at %q: %+v", flAddr, err)
-		}
+		log.Print(err)
 		os.Exit(StatusConnectionFailure)
 	}
 	connDuration := time.Since(connStart)

@@ -11,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package main
+
+package probe
 
 import (
 	"crypto/tls"
@@ -22,7 +23,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// buildCredentials constructs gRPC transport credentials.
+// BuildCredentials constructs gRPC transport credentials.
 //
 // * If clientCert and clientKey are provided, it will use the pair to
 //   authenticate.
@@ -33,7 +34,7 @@ import (
 //
 // * If serverName is provided, it will be used to verify the authenticity of
 //   the server (when skipVerify is not set to true).
-func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverName string) (credentials.TransportCredentials, error) {
+func BuildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverName string) (credentials.TransportCredentials, error) {
 	var cfg tls.Config
 
 	if clientCert != "" && clientKey != "" {
