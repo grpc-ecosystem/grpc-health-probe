@@ -165,24 +165,15 @@ func main() {
 	}
 
 	rpcStart := time.Now()
-	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
-	defer rpcCancel()
-	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{Service: flService})
-	if err != nil {
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
-			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
-		} else if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
-			log.Printf("timeout: health rpc did not complete within %v", flRPCTimeout)
-		} else {
-			log.Printf("error: health rpc failed: %+v", err)
-		}
-		os.Exit(StatusRPCFailure)
-	}
+	err = Check(rpcCtx, healthpb.NewHealthClient(conn), flRPCTimeout, flService)
 	rpcDuration := time.Since(rpcStart)
-
-	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
-		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
-		os.Exit(StatusUnhealthy)
+	if err != nil {
+		if _, ok := err.(ServingStatusError); ok {
+			log.Print(err)
+			os.Exit(StatusUnhealthy)
+		}
+		log.Print(err)
+		os.Exit(StatusRPCFailure)
 	}
 	if flVerbose {
 		log.Printf("time elapsed: connect=%v rpc=%v", connDuration, rpcDuration)

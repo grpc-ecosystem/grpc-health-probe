@@ -59,7 +59,7 @@ func TestConnect_withCredentials(t *testing.T) {
 		t.Fatalf("failed to build credentials: %+v", creds)
 	}
 
-	conn, err := Connect(context.TODO(), addr, creds, time.Millisecond*100)
+	conn, err := Connect(context.TODO(), addr, creds, time.Millisecond*500)
 	if err != nil {
 		t.Fatalf("failed to connect: %+v", err)
 	}

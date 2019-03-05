@@ -63,16 +63,29 @@ func makeRequest(t *testing.T, conn *grpc.ClientConn) {
 	}
 }
 
-type mockHealth struct{}
+type mockHealthService struct{}
 
-func (m *mockHealth) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+func (m *mockHealthService) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
 	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
 }
 
-func (m *mockHealth) Watch(*healthpb.HealthCheckRequest, healthpb.Health_WatchServer) error {
+func (m *mockHealthService) Watch(*healthpb.HealthCheckRequest, healthpb.Health_WatchServer) error {
 	return errors.New("not implemented")
 }
 
-func newMockHealthService() healthpb.HealthServer {
-	return &mockHealth{}
+func newMockHealthService() healthpb.HealthServer { return &mockHealthService{} }
+
+type mockHealthClient struct {
+	checkFunc func(string) (healthpb.HealthCheckResponse_ServingStatus, error)
+}
+
+func (m *mockHealthClient) Check(ctx context.Context, in *healthpb.HealthCheckRequest, opts ...grpc.CallOption) (*healthpb.HealthCheckResponse, error) {
+	s, err := m.checkFunc(in.GetService())
+	return &healthpb.HealthCheckResponse{
+		Status: s,
+	}, err
+}
+
+func (m *mockHealthClient) Watch(ctx context.Context, in *healthpb.HealthCheckRequest, opts ...grpc.CallOption) (healthpb.Health_WatchClient, error) {
+	return nil, errors.New("not implemented")
 }
