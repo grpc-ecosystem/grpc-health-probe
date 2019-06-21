@@ -8,7 +8,11 @@ responds with a `SERVING` status, the `grpc_health_probe` will exit with
 success, otherwise it will exit with a non-zero exit code (documented below).
 
 `grpc_health_probe` is meant to be used for health checking gRPC applications in
-[Kubernetes][k8s], using the [exec probes][execprobe].
+[Kubernetes][k8s], using the [exec probes][execprobe] or as an [httpp robe[httpprobe].
+
+This can also be used as an standalone HTTP based gRPC healthcheck where an `grpc_health_probe`
+receives an HTTP request and internally makes a gRPC health check to the upstream server.
+In other words, `grpc_health_probe` can be used as an http proxy for gRPC healthchecks.
 
 **EXAMPLES**
 
@@ -22,6 +26,57 @@ $ grpc_health_probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100
 failed to connect service at "localhost:9999": context deadline exceeded
 exit status 2
 ```
+
+- Check the status of an upstream gRPC serviceName `echo.EchoService` listening on `:50051`:
+
+```text
+$ grpc_health_probe --addr localhost:50051 \
+                    --service echo.EchoServer
+```
+
+- HTTP to gRPC HealthCheck proxy:
+
+`grpc_health_probe` will listen on `:8080` for HTTP healthcheck requests at path `/healthz`.
+
+```text
+$ grpc_health_probe --http-listen-addr localhost:8080 \
+                    --http-listen-path /healthz \
+                    --addr localhost:50051 \
+                    --service echo.EchoServer
+```
+
+- HTTPS to gRPC HealthCheck proxy:
+
+`grpc_health_probe` will listen on `:8080` for HTTPS healthcheck requests at path `/healthz`.
+
+HTTPS listener will use keypairs [server_crt.pem, server_crt.pem]
+
+```text
+$ grpc_health_probe --http-listen-addr localhost:8080 \
+                    --http-listen-path /heatlhz \
+                    --addr localhost:50051 \
+                    --https-listen-cert server_crt.pem \
+                    --https-listen-key server_key.pem \
+                    --service echo.EchoServer
+```
+
+- mTLS HTTPS to gRPC HealthCheck proxy:
+
+`grpc_health_probe` will listen on `:8080` for HTTPS with mTLS healthcheck requests at path `/healthz`.
+
+HTTPS listener will use keypairs [server_crt.pem, server_crt.pem] and verify client certificates issued by `CA_crt.pem`
+
+```text
+$ grpc_health_probe --http-listen-addr localhost:8080 \
+                    --http-listen-path /healthz \
+                    --addr localhost:50051 \
+                    --https-listen-cert server_crt.pem \
+                    --https-listen-key server_key.pem \
+                    --service echo.EchoServer \
+                    --https-listen-verify \
+                    --https-listen-ca=CA_crt.pem
+```
+
 
 ## Installation
 
@@ -106,6 +161,41 @@ with command-line options:
 | **`-tls-no-verify`** | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
 | **`-tls-server-name`** | override the hostname used to verify the server certificate |
 
+## HTTP(s) Proxy
+
+`grpc_health_probe` will listen for inbound HTTP(s) requests and for each request, perform a gRPC healthcheck.
+Configuration options for HTTTP(s) listener supports TLS and mTLS
+
+| Option | Description |
+|:------------|-------------|
+| **`-http-listen-addr`** | host:port for the http(s) listener |
+| **`-http-listen-path`** | path for http healthcheck requests (defaut `/`|
+| **`-https-listen-cert`** | server public certificate for https listner |
+| **`-https-listen-key`** | server private key for https listner |
+| **`-https-listen-verify`** | option to enable mTLS for HTTPS requests |
+| **`-https-listen-ca`** | trust CA for mTLS |
+
+
+Sample usage with curl clients (assumes `grpc_health_proxy` listens on :8080)
+
+HTTP:
+
+```text
+curl -vk https://localhost:8080/healthz
+```
+
+HTTPS:
+
+```text
+curl --cacert CA_crt.pem  --key server_key.pem   --cert server_crt.pem  https://localhost:8080/healthz
+```
+
+mTLS
+
+```text
+curl  --cacert CA_crt.pem  --key client_key.pem   --cert client_crt.pem  https://localhost:8080/healthz
+```
+
 **Example:**
 
 1. Start the `route_guide` [example
@@ -148,3 +238,4 @@ This is not an official Google project.
 [k8s]: https://kubernetes.io/
 [execprobe]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-command
 [rel]: https://github.com/grpc-ecosystem/grpc-health-probe/releases
+[httpprobe]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-http-request
