@@ -132,7 +132,7 @@ func init() {
 	if flVerbose {
 		log.Printf("parsed options:")
 		log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
-		log.Printf("> metadta=%v", flMetadata)
+		log.Printf("> metadata=%v", flMetadata)
 		log.Printf("> tls=%v", flTLS)
 		if flTLS {
 			log.Printf("  > no-verify=%v ", flTLSNoVerify)
