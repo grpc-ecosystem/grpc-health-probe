@@ -21,11 +21,11 @@ import (
 	"os/signal"
 	"time"
 
-	grpc_health_probe "github.com/grpc-ecosystem/grpc-health-probe/pkg"
+	"github.com/grpc-ecosystem/grpc-health-probe/pkg/prober"
 )
 
 var (
-	globalConfig = &grpc_health_probe.Config{}
+	globalConfig = &prober.Config{}
 )
 
 func init() {
@@ -49,7 +49,7 @@ func init() {
 
 	argError := func(s string, v ...interface{}) {
 		log.Printf("error: "+s, v...)
-		os.Exit(grpc_health_probe.StatusInvalidArguments)
+		os.Exit(prober.StatusInvalidArguments)
 	}
 
 	if err := globalConfig.Validate(); err != nil {
@@ -84,7 +84,13 @@ func main() {
 		}
 	}()
 
-	resp, err := grpc_health_probe.Check(ctx, globalConfig)
+	checker, err := prober.NewChecker(globalConfig, &log.Logger{})
+	if err != nil {
+		log.Printf(err.Error())
+		os.Exit(err.ExitCode)
+	}
+
+	resp, err := checker.Check(ctx)
 	if err != nil {
 		log.Printf(err.Error())
 		os.Exit(err.ExitCode)
