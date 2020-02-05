@@ -162,6 +162,9 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 }
 
 func main() {
+	retcode := 0
+	defer func() { os.Exit(retcode) }()
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := make(chan os.Signal, 1)
@@ -182,7 +185,8 @@ func main() {
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials. error=%v", err)
-			os.Exit(StatusInvalidArguments)
+			retcode = StatusInvalidArguments
+			return
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
@@ -202,7 +206,8 @@ func main() {
 		} else {
 			log.Printf("error: failed to connect service at %q: %+v", flAddr, err)
 		}
-		os.Exit(StatusConnectionFailure)
+		retcode = StatusConnectionFailure
+		return
 	}
 	connDuration := time.Since(connStart)
 	defer conn.Close()
@@ -222,13 +227,15 @@ func main() {
 		} else {
 			log.Printf("error: health rpc failed: %+v", err)
 		}
-		os.Exit(StatusRPCFailure)
+		retcode = StatusRPCFailure
+		return
 	}
 	rpcDuration := time.Since(rpcStart)
 
 	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
 		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
-		os.Exit(StatusUnhealthy)
+		retcode = StatusUnhealthy
+		return
 	}
 	if flVerbose {
 		log.Printf("time elapsed: connect=%v rpc=%v", connDuration, rpcDuration)
