@@ -106,6 +106,16 @@ with command-line options:
 | **`-tls-no-verify`** | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
 | **`-tls-server-name`** | override the hostname used to verify the server certificate |
 
+## Other Available Flags
+
+| Option | Description |
+|:------------|-------------|
+| **`-v`**    | verbose logs (default: false) |
+| **`-connect-timeout`** | timeout for establishing connection |
+| **`-rpc-timeout`** | timeout for health check rpc |
+| **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
+| **`-service`** | service name to check (default: "") - empty string is convention for server health |
+
 **Example:**
 
 1. Start the `route_guide` [example
