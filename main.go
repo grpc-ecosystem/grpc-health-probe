@@ -59,23 +59,27 @@ const (
 )
 
 func init() {
+	flagSet := flag.NewFlagSet("grpc-health-probe-flag-set", flag.ContinueOnError)
 	log.SetFlags(0)
-	flag.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
-	flag.StringVar(&flService, "service", "", "service name to check (default: \"\")")
-	flag.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
+	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
+	flagSet.StringVar(&flService, "service", "", "service name to check (default: \"\")")
+	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
 	// timeouts
-	flag.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
-	flag.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
+	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
+	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
 	// tls settings
-	flag.BoolVar(&flTLS, "tls", false, "use TLS (default: false, INSECURE plaintext transport)")
-	flag.BoolVar(&flTLSNoVerify, "tls-no-verify", false, "(with -tls) don't verify the certificate (INSECURE) presented by the server (default: false)")
-	flag.StringVar(&flTLSCACert, "tls-ca-cert", "", "(with -tls, optional) file containing trusted certificates for verifying server")
-	flag.StringVar(&flTLSClientCert, "tls-client-cert", "", "(with -tls, optional) client certificate for authenticating to the server (requires -tls-client-key)")
-	flag.StringVar(&flTLSClientKey, "tls-client-key", "", "(with -tls) client private key for authenticating to the server (requires -tls-client-cert)")
-	flag.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
-	flag.BoolVar(&flVerbose, "v", false, "verbose logs")
+	flagSet.BoolVar(&flTLS, "tls", false, "use TLS (default: false, INSECURE plaintext transport)")
+	flagSet.BoolVar(&flTLSNoVerify, "tls-no-verify", false, "(with -tls) don't verify the certificate (INSECURE) presented by the server (default: false)")
+	flagSet.StringVar(&flTLSCACert, "tls-ca-cert", "", "(with -tls, optional) file containing trusted certificates for verifying server")
+	flagSet.StringVar(&flTLSClientCert, "tls-client-cert", "", "(with -tls, optional) client certificate for authenticating to the server (requires -tls-client-key)")
+	flagSet.StringVar(&flTLSClientKey, "tls-client-key", "", "(with -tls) client private key for authenticating to the server (requires -tls-client-cert)")
+	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
+	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
 
-	flag.Parse()
+	err := flagSet.Parse(os.Args[1:])
+	if err != nil {
+		os.Exit(StatusInvalidArguments)
+	}
 
 	argError := func(s string, v ...interface{}) {
 		log.Printf("error: "+s, v...)
