@@ -59,7 +59,7 @@ const (
 )
 
 func init() {
-	flagSet := flag.NewFlagSet("grpc-health-probe-flag-set", flag.ContinueOnError)
+	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
 	log.SetFlags(0)
 	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
 	flagSet.StringVar(&flService, "service", "", "service name to check (default: \"\")")
