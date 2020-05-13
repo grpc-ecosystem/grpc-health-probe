@@ -44,7 +44,7 @@ Since the Health Checking protocol is part of the gRPC core, it has
 packages/libraries available for the languages supported by gRPC:
 
 [[health.proto](https://github.com/grpc/grpc/blob/master/src/proto/grpc/health/v1/health.proto)]
-[[Go](https://godoc.org/google.golang.org/grpc/health/grpc_health_v1)]
+[[Go](https://pkg.go.dev/google.golang.org/grpc/health/grpc_health_v1?tab=doc)]
 [[Java](https://github.com/grpc/grpc-java/blob/master/services/src/generated/main/grpc/io/grpc/health/v1/HealthGrpc.java)]
 [[Python](https://github.com/grpc/grpc/tree/master/src/python/grpcio_health_checking)]
 [[C#](https://github.com/grpc/grpc/tree/master/src/csharp/Grpc.HealthCheck)/[NuGet](https://www.nuget.org/packages/Grpc.HealthCheck/)]
