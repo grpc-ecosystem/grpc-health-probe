@@ -216,7 +216,7 @@ func main() {
 	connDuration := time.Since(connStart)
 	defer conn.Close()
 	if flVerbose {
-		log.Printf("connection establisted (took %v)", connDuration)
+		log.Printf("connection established (took %v)", connDuration)
 	}
 
 	rpcStart := time.Now()
