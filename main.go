@@ -201,8 +201,8 @@ func main() {
 		log.Print("establishing connection")
 	}
 	connStart := time.Now()
-	dialCtx, cancel2 := context.WithTimeout(ctx, flConnTimeout)
-	defer cancel2()
+	dialCtx, dialCancel := context.WithTimeout(ctx, flConnTimeout)
+	defer dialCancel()
 	conn, err := grpc.DialContext(dialCtx, flAddr, opts...)
 	if err != nil {
 		if err == context.DeadlineExceeded {
@@ -222,7 +222,9 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
-	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx, &healthpb.HealthCheckRequest{Service: flService})
+	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx,
+		&healthpb.HealthCheckRequest{
+			Service: flService})
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
 			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")

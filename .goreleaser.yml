@@ -1,0 +1,23 @@
+before:
+  hooks:
+  - go mod download
+builds:
+- id: grpc_health_probe
+  main: .
+  binary: grpc_health_probe
+  flags:
+  - -tags=netgo
+  ldflags:
+  - -w
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  goarch:
+  - i386
+  - amd64
+  - arm
+  - arm64
+  - ppc64le
+  - s390x
+  goarm: [6]
