@@ -26,9 +26,10 @@ exit status 2
 ## Installation
 
 **It is recommended** to use a version-stamped binary distribution:
-- Refer to the [Releases][rel] section for binary distributions.
 
-Installing from source (not recommended)
+- Choose a binary from the [Releases][rel] page.
+
+Installing from source (not recommended):
 
 - Make sure you have `git` and `go` installed.
 - Run: `go get github.com/grpc-ecosystem/grpc-health-probe`
@@ -56,8 +57,14 @@ implementation details. This eliminates the need for you to implement the
 
 ## Example: gRPC health checking on Kubernetes
 
-You are recommended to use [Kubernetes exec probes][execprobe] and define
-liveness and readiness checks for your gRPC server pods.
+Kubernetes does not natively support gRPC health checking since it does not
+favor one RPC framework over another. Similarly, HTTP health probes Kubernetes
+has is not sufficient to craft a valid gRPC request. As a solution,
+`grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
+servers running in the Pod.
+
+You are recommended to use [Kubernetes `exec` probes][execprobe] and define
+liveness and/or readiness checks for your gRPC server pods.
 
 You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
@@ -152,9 +159,10 @@ a non-zero exit code.
 | **4** | failure: rpc successful, but the response is not `SERVING` |
 
 ----
+
 This is not an official Google project.
 
 [hc]: https://github.com/grpc/grpc/blob/master/doc/health-checking.md
-[k8s]: https://kubernetes.io/
+[k8s]: https://kubernetes.io/blog/2018/10/01/health-checking-grpc-servers-on-kubernetes/
 [execprobe]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-command
 [rel]: https://github.com/grpc-ecosystem/grpc-health-probe/releases
