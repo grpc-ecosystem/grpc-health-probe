@@ -1,5 +1,9 @@
 # grpc_health_probe(1)
 
+![ci](https://github.com/grpc-ecosystem/grpc-health-probe/workflows/ci/badge.svg)
+![GitHub all releases](https://img.shields.io/github/downloads/grpc-ecosystem/grpc-health-probe/total)
+
+
 The `grpc_health_probe` utility allows you to query health of gRPC services that
 expose service their status through the [gRPC Health Checking Protocol][hc].
 
