@@ -2,8 +2,7 @@ before:
   hooks:
   - go mod download
 builds:
-- id: grpc_health_probe
-  main: .
+- main: .
   binary: grpc_health_probe
   flags:
   - -tags=netgo
@@ -14,10 +13,16 @@ builds:
   goos:
   - linux
   goarch:
-  - 386
+  - "386"
   - amd64
   - arm
   - arm64
   - ppc64le
   - s390x
   goarm: [6]
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+archives:
+  - format: binary
+    name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
