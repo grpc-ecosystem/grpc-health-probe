@@ -126,6 +126,7 @@ with command-line options:
 | **`-rpc-timeout`** | timeout for health check rpc |
 | **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
 | **`-service`** | service name to check (default: "") - empty string is convention for server health |
+| **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
 
 **Example:**
 
