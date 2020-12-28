@@ -45,6 +45,7 @@ var (
 	flTLSClientKey  string
 	flTLSServerName string
 	flVerbose       bool
+	flGZIP          bool
 )
 
 const (
@@ -75,6 +76,7 @@ func init() {
 	flagSet.StringVar(&flTLSClientKey, "tls-client-key", "", "(with -tls) client private key for authenticating to the server (requires -tls-client-cert)")
 	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
+	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
 
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
@@ -184,7 +186,8 @@ func main() {
 
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent(flUserAgent),
-		grpc.WithBlock()}
+		grpc.WithBlock(),
+	}
 	if flTLS {
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
@@ -195,6 +198,13 @@ func main() {
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
 		opts = append(opts, grpc.WithInsecure())
+	}
+
+	if flGZIP {
+		opts = append(opts,
+			grpc.WithCompressor(grpc.NewGZIPCompressor()),
+			grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
+		)
 	}
 
 	if flVerbose {
@@ -227,7 +237,7 @@ func main() {
 			Service: flService})
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
-			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health)")
+			log.Printf("error: this server does not implement the grpc health protocol (grpc.health.v1.Health): %s", stat.Message())
 		} else if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
 			log.Printf("timeout: health rpc did not complete within %v", flRPCTimeout)
 		} else {
