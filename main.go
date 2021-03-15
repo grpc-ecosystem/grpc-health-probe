@@ -36,6 +36,7 @@ var (
 	flAddr          string
 	flService       string
 	flUserAgent     string
+	flOnlyConnect   bool
 	flConnTimeout   time.Duration
 	flRPCTimeout    time.Duration
 	flTLS           bool
@@ -65,6 +66,7 @@ func init() {
 	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
 	flagSet.StringVar(&flService, "service", "", "service name to check (default: \"\")")
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
+	flagSet.BoolVar(&flOnlyConnect, "only-connect", false, "check only the connection (default: false)")
 	// timeouts
 	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
 	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
@@ -227,6 +229,9 @@ func main() {
 	defer conn.Close()
 	if flVerbose {
 		log.Printf("connection established (took %v)", connDuration)
+	}
+	if flOnlyConnect {
+		return
 	}
 
 	rpcStart := time.Now()
