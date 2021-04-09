@@ -12,6 +12,7 @@ builds:
   - CGO_ENABLED=0
   goos:
   - linux
+  - darwin
   goarch:
   - "386"
   - amd64
@@ -19,6 +20,9 @@ builds:
   - arm64
   - ppc64le
   - s390x
+  ignore:
+  - goos: darwin
+    goarch: "386"
   goarm: [6]
 checksum:
   name_template: "checksums.txt"
