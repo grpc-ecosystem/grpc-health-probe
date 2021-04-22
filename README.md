@@ -120,7 +120,7 @@ with command-line options:
 ## Health checking TLS Servers with SPIFFE issued credentials
 
 If your gRPC server requires authentication, you can use the following command line options and set the 
-[SPIFFE_ENDPOINT_SOCKET](https://github.com/spiffe/spiffe/blob/0f44285b4caa95244ecbf003dd6729d5295ae743/standards/SPIFFE_Workload_Endpoint.md#4-locating-the-endpoint)
+[SPIFFE_ENDPOINT_SOCKET][spiffe-socket]
 environment variable.
 
 | Option | Description |
@@ -183,3 +183,4 @@ This is not an official Google project.
 [execprobe]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#define-a-liveness-command
 [rel]: https://github.com/grpc-ecosystem/grpc-health-probe/releases
 [spiffe]: https://github.com/spiffe/spiffe/blob/master/standards/SPIFFE_Workload_API.md
+[spiffe-socket]: https://github.com/spiffe/spiffe/blob/0f44285b4caa95244ecbf003dd6729d5295ae743/standards/SPIFFE_Workload_Endpoint.md#4-locating-the-endpoint
