@@ -48,7 +48,7 @@ var (
 	flTLSServerName string
 	flVerbose       bool
 	flGZIP          bool
-	flSpiffe        bool
+	flSPIFFE        bool
 )
 
 const (
@@ -61,7 +61,7 @@ const (
 	// StatusUnhealthy indicates rpc succeeded but indicates unhealthy service.
 	StatusUnhealthy = 4
 	// StatusSpiffeFailed indicates failure to retrieve credentials using spiffe workload API
-	StatusSpiffeFailed = 5
+	StatusSpiffeFailed = 20
 )
 
 func init() {
@@ -82,7 +82,7 @@ func init() {
 	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
 	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
-	flagSet.BoolVar(&flSpiffe, "spiffe", false, "use Spiffe to aquire TLS certificates (default: false)")
+	flagSet.BoolVar(&flSPIFFE, "spiffe", false, "use SPIFFE to obtain mTLS credentials")
 
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
@@ -139,7 +139,7 @@ func init() {
 			log.Printf("  > client-key=%s", flTLSClientKey)
 			log.Printf("  > server-name=%s", flTLSServerName)
 		}
-		log.Printf("> spiffe=%v", flSpiffe)
+		log.Printf("> spiffe=%v", flSPIFFE)
 	}
 }
 
@@ -195,6 +195,11 @@ func main() {
 		grpc.WithUserAgent(flUserAgent),
 		grpc.WithBlock(),
 	}
+	if flTLS && flSPIFFE {
+		log.Printf("-tls and -spiffe are mutually incompatible")
+		retcode = StatusInvalidArguments
+		return
+	}
 	if flTLS {
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
@@ -203,7 +208,8 @@ func main() {
 			return
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
-	} else if flSpiffe {
+	}
+	if flSPIFFE {
 		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
 		source, err := workloadapi.NewX509Source(spiffeCtx)
 		if err != nil {
@@ -216,7 +222,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("error getting x509 svid: %+v", err)
 			}
-			log.Printf("SVID: %q", svid.ID)
+			log.Printf("SPIFFE Verifiable Identity Document (SVID): %q", svid.ID)
 		}
 		creds := credentials.NewTLS(tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()))
 		opts = append(opts, grpc.WithTransportCredentials(creds))

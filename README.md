@@ -117,16 +117,15 @@ with command-line options:
 | **`-tls-no-verify`** | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
 | **`-tls-server-name`** | override the hostname used to verify the server certificate |
 
-## Health checking TLS Servers with Spiffe issued credentials
+## Health checking TLS Servers with SPIFFE issued credentials
 
-If a gRPC is serving traffic over TLS, or uses TLS client authentication to authorize clients, and the [Spiffe Workload
-API][spiffe] is available to issue TLS credentials to `grpc_health_probe`. To use it set the 
-[SPIFFE_ENDPOINT_SOCKET](https://github.com/spiffe/spiffe/blob/0f44285b4caa95244ecbf003dd6729d5295ae743/standards/SPIFFE_Workload_Endpoint.md#4-locating-the-endpoint) 
-env variable use command-line option:
+If your gRPC server requires authentication, you can use the following command line options and set the 
+[SPIFFE_ENDPOINT_SOCKET](https://github.com/spiffe/spiffe/blob/0f44285b4caa95244ecbf003dd6729d5295ae743/standards/SPIFFE_Workload_Endpoint.md#4-locating-the-endpoint)
+environment variable.
 
 | Option | Description |
 |:------------|-------------|
-| **`-spiffe` | use Spiffe Workload API to retrieve TLS credentials (default: false) |
+| **`-spiffe` | use [SPIFFE Workload API][spiffe] to retrieve TLS credentials (default: false) |
 
 ## Other Available Flags
 
@@ -173,7 +172,7 @@ a non-zero exit code.
 | **2** | failure: connection failed or timed out |
 | **3** | failure: rpc failed or timed out |
 | **4** | failure: rpc successful, but the response is not `SERVING` |
-| **5** | failure: could not retrieve TLS credentials using the Spiffe Workload API |
+| **20** | failure: could not retrieve TLS credentials using the [SPIFFE Workload API][spiffe] |
 
 ----
 
