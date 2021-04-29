@@ -125,7 +125,7 @@ environment variable.
 
 | Option | Description |
 |:------------|-------------|
-| **`-spiffe` | use [SPIFFE Workload API][spiffe] to retrieve TLS credentials (default: false) |
+| **`-spiffe`** | use [SPIFFE Workload API][spiffe] to retrieve TLS credentials (default: false) |
 
 ## Other Available Flags
 
