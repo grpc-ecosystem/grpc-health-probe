@@ -208,8 +208,7 @@ func main() {
 			return
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
-	}
-	if flSPIFFE {
+	} else if flSPIFFE {
 		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
 		source, err := workloadapi.NewX509Source(spiffeCtx)
 		if err != nil {
