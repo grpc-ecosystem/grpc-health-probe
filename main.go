@@ -38,6 +38,7 @@ var (
 	flAddr          string
 	flService       string
 	flUserAgent     string
+	flDisableProxy  bool
 	flConnTimeout   time.Duration
 	flRPCTimeout    time.Duration
 	flTLS           bool
@@ -70,6 +71,7 @@ func init() {
 	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
 	flagSet.StringVar(&flService, "service", "", "service name to check (default: \"\")")
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
+	flagSet.BoolVar(&flDisableProxy, "no-proxy", false, "disable use of proxies (default: false)")
 	// timeouts
 	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
 	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
@@ -194,6 +196,9 @@ func main() {
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent(flUserAgent),
 		grpc.WithBlock(),
+	}
+	if flDisableProxy {
+		opts = append(opts, grpc.WithNoProxy())
 	}
 	if flTLS && flSPIFFE {
 		log.Printf("-tls and -spiffe are mutually incompatible")
