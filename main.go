@@ -23,7 +23,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -31,6 +33,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -39,6 +42,7 @@ var (
 	flService       string
 	flUserAgent     string
 	flConnTimeout   time.Duration
+	flRPCHeaders    multiString
 	flRPCTimeout    time.Duration
 	flTLS           bool
 	flTLSNoVerify   bool
@@ -72,6 +76,7 @@ func init() {
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
 	// timeouts
 	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
+	flagSet.Var(&flRPCHeaders, "rpc-header", "Additional RPC headers in 'name: value' format. May specify more than one via multiple flags.")
 	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
 	// tls settings
 	flagSet.BoolVar(&flTLS, "tls", false, "use TLS (default: false, INSECURE plaintext transport)")
@@ -143,6 +148,17 @@ func init() {
 	}
 }
 
+type multiString []string
+
+func (s *multiString) String() string {
+	return strings.Join(*s, ",")
+}
+
+func (s *multiString) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
 func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverName string) (credentials.TransportCredentials, error) {
 	var cfg tls.Config
 
@@ -172,6 +188,18 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 		cfg.ServerName = serverName
 	}
 	return credentials.NewTLS(&cfg), nil
+}
+
+func addRPCHeaders(ctx context.Context) (context.Context, error) {
+	for _, header := range flRPCHeaders {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid RPC header, expected 'key: value', got %q", header)
+		}
+		value := strings.TrimLeftFunc(parts[1], unicode.IsSpace)
+		ctx = metadata.AppendToOutgoingContext(ctx, parts[0], value)
+	}
+	return ctx, nil
 }
 
 func main() {
@@ -261,6 +289,12 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
+	rpcCtx, err = addRPCHeaders(rpcCtx)
+	if err != nil {
+		log.Println(err)
+		retcode = StatusInvalidArguments
+		return
+	}
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx,
 		&healthpb.HealthCheckRequest{
 			Service: flService})
