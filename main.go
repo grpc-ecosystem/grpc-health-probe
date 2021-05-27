@@ -42,7 +42,7 @@ var (
 	flService       string
 	flUserAgent     string
 	flConnTimeout   time.Duration
-	flRPCHeaders    multiString
+	flRPCHeaders    rpcHeaders
 	flRPCTimeout    time.Duration
 	flTLS           bool
 	flTLSNoVerify   bool
@@ -136,7 +136,7 @@ func init() {
 	if flVerbose {
 		log.Printf("parsed options:")
 		log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
-		if len(flRPCHeaders) > 0 {
+		if flRPCHeaders.Len() > 0 {
 			log.Printf("> headers: %s", flRPCHeaders)
 		}
 		log.Printf("> tls=%v", flTLS)
@@ -151,14 +151,21 @@ func init() {
 	}
 }
 
-type multiString []string
-
-func (s *multiString) String() string {
-	return strings.Join(*s, ",")
+type rpcHeaders struct {
+	metadata.MD
 }
 
-func (s *multiString) Set(value string) error {
-	*s = append(*s, value)
+func (s *rpcHeaders) String() string {
+	return fmt.Sprintf("%v", s.MD)
+}
+
+func (s *rpcHeaders) Set(value string) error {
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid RPC header, expected 'key: value', got %q", value)
+	}
+	trimmed := strings.TrimLeftFunc(parts[1], unicode.IsSpace)
+	s.Append(parts[0], trimmed)
 	return nil
 }
 
@@ -191,18 +198,6 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 		cfg.ServerName = serverName
 	}
 	return credentials.NewTLS(&cfg), nil
-}
-
-func addRPCHeaders(ctx context.Context) (context.Context, error) {
-	for _, header := range flRPCHeaders {
-		parts := strings.SplitN(header, ":", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid RPC header, expected 'key: value', got %q", header)
-		}
-		value := strings.TrimLeftFunc(parts[1], unicode.IsSpace)
-		ctx = metadata.AppendToOutgoingContext(ctx, parts[0], value)
-	}
-	return ctx, nil
 }
 
 func main() {
@@ -292,7 +287,7 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
-	rpcCtx, err = addRPCHeaders(rpcCtx)
+	rpcCtx = metadata.NewOutgoingContext(ctx, flRPCHeaders.MD)
 	if err != nil {
 		log.Println(err)
 		retcode = StatusInvalidArguments
