@@ -18,6 +18,8 @@ func startServing(t *testing.T, srv *grpc.Server) string {
 		t.Fatalf("failed to listen: %v", err)
 	}
 	go srv.Serve(lis)
+	// srv.Stop() closes the listener.
+	t.Cleanup(srv.Stop)
 	return lis.Addr().String()
 }
 
@@ -25,7 +27,6 @@ func TestHealthProbe(t *testing.T) {
 	srv := grpc.NewServer()
 	grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
 	addr := startServing(t, srv)
-	defer srv.Stop()
 
 	retcode := probe("-addr=" + addr)
 	if retcode != 0 {
@@ -36,7 +37,6 @@ func TestHealthProbe(t *testing.T) {
 func TestHealthProbeUnimplemented(t *testing.T) {
 	srv := grpc.NewServer()
 	addr := startServing(t, srv)
-	defer srv.Stop()
 
 	retcode := probe("-addr=" + addr)
 	if retcode != StatusRPCFailure {
