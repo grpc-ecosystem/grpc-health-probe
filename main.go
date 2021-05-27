@@ -136,6 +136,9 @@ func init() {
 	if flVerbose {
 		log.Printf("parsed options:")
 		log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
+		if len(flRPCHeaders) > 0 {
+			log.Printf("> headers: %s", flRPCHeaders)
+		}
 		log.Printf("> tls=%v", flTLS)
 		if flTLS {
 			log.Printf("  > no-verify=%v ", flTLSNoVerify)
