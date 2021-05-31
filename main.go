@@ -76,7 +76,7 @@ func init() {
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
 	// timeouts
 	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
-	flagSet.Var(&flRPCHeaders, "rpc-header", "Additional RPC headers in 'name: value' format. May specify more than one via multiple flags.")
+	flagSet.Var(&flRPCHeaders, "rpc-header", "additional RPC headers in 'name: value' format. May specify more than one via multiple flags.")
 	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
 	// tls settings
 	flagSet.BoolVar(&flTLS, "tls", false, "use TLS (default: false, INSECURE plaintext transport)")
@@ -288,11 +288,6 @@ func main() {
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
 	rpcCtx = metadata.NewOutgoingContext(ctx, flRPCHeaders.MD)
-	if err != nil {
-		log.Println(err)
-		retcode = StatusInvalidArguments
-		return
-	}
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx,
 		&healthpb.HealthCheckRequest{
 			Service: flService})
