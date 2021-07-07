@@ -23,7 +23,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -31,6 +33,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -39,6 +42,7 @@ var (
 	flService       string
 	flUserAgent     string
 	flConnTimeout   time.Duration
+	flRPCHeaders    rpcHeaders
 	flRPCTimeout    time.Duration
 	flTLS           bool
 	flTLSNoVerify   bool
@@ -72,6 +76,7 @@ func init() {
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
 	// timeouts
 	flagSet.DurationVar(&flConnTimeout, "connect-timeout", time.Second, "timeout for establishing connection")
+	flagSet.Var(&flRPCHeaders, "rpc-header", "additional RPC headers in 'name: value' format. May specify more than one via multiple flags.")
 	flagSet.DurationVar(&flRPCTimeout, "rpc-timeout", time.Second, "timeout for health check rpc")
 	// tls settings
 	flagSet.BoolVar(&flTLS, "tls", false, "use TLS (default: false, INSECURE plaintext transport)")
@@ -131,6 +136,9 @@ func init() {
 	if flVerbose {
 		log.Printf("parsed options:")
 		log.Printf("> addr=%s conn_timeout=%v rpc_timeout=%v", flAddr, flConnTimeout, flRPCTimeout)
+		if flRPCHeaders.Len() > 0 {
+			log.Printf("> headers: %s", flRPCHeaders)
+		}
 		log.Printf("> tls=%v", flTLS)
 		if flTLS {
 			log.Printf("  > no-verify=%v ", flTLSNoVerify)
@@ -141,6 +149,24 @@ func init() {
 		}
 		log.Printf("> spiffe=%v", flSPIFFE)
 	}
+}
+
+type rpcHeaders struct {
+	metadata.MD
+}
+
+func (s *rpcHeaders) String() string {
+	return fmt.Sprintf("%v", s.MD)
+}
+
+func (s *rpcHeaders) Set(value string) error {
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid RPC header, expected 'key: value', got %q", value)
+	}
+	trimmed := strings.TrimLeftFunc(parts[1], unicode.IsSpace)
+	s.Append(parts[0], trimmed)
+	return nil
 }
 
 func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverName string) (credentials.TransportCredentials, error) {
@@ -261,6 +287,7 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
+	rpcCtx = metadata.NewOutgoingContext(ctx, flRPCHeaders.MD)
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx,
 		&healthpb.HealthCheckRequest{
 			Service: flService})
