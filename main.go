@@ -42,7 +42,7 @@ var (
 	flService       string
 	flUserAgent     string
 	flConnTimeout   time.Duration
-	flRPCHeaders    rpcHeaders
+	flRPCHeaders    = rpcHeaders{MD: make(metadata.MD)}
 	flRPCTimeout    time.Duration
 	flTLS           bool
 	flTLSNoVerify   bool
@@ -151,13 +151,9 @@ func init() {
 	}
 }
 
-type rpcHeaders struct {
-	metadata.MD
-}
+type rpcHeaders struct{ metadata.MD }
 
-func (s *rpcHeaders) String() string {
-	return fmt.Sprintf("%v", s.MD)
-}
+func (s *rpcHeaders) String() string { return fmt.Sprintf("%v", s.MD) }
 
 func (s *rpcHeaders) Set(value string) error {
 	parts := strings.SplitN(value, ":", 2)
