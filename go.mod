@@ -10,4 +10,4 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 )
 
-go 1.15
+go 1.17
