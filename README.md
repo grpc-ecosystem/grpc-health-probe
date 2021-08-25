@@ -1,28 +1,28 @@
-# grpc_health_probe(1)
+# grpc-health-probe(1)
 
 ![ci](https://github.com/grpc-ecosystem/grpc-health-probe/workflows/ci/badge.svg)
 ![GitHub all releases](https://img.shields.io/github/downloads/grpc-ecosystem/grpc-health-probe/total)
 
 
-The `grpc_health_probe` utility allows you to query health of gRPC services that
+The `grpc-health-probe` utility allows you to query health of gRPC services that
 expose service their status through the [gRPC Health Checking Protocol][hc].
 
 This command-line utility makes a RPC to `/grpc.health.v1.Health/Check`. If it
-responds with a `SERVING` status, the `grpc_health_probe` will exit with
+responds with a `SERVING` status, the `grpc-health-probe` will exit with
 success, otherwise it will exit with a non-zero exit code (documented below).
 
-`grpc_health_probe` is meant to be used for health checking gRPC applications in
+`grpc-health-probe` is meant to be used for health checking gRPC applications in
 [Kubernetes][k8s], using the [exec probes][execprobe].
 
 **EXAMPLES**
 
 ```text
-$ grpc_health_probe -addr=localhost:5000
+$ grpc-health-probe -addr=localhost:5000
 healthy: SERVING
 ```
 
 ```text
-$ grpc_health_probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
+$ grpc-health-probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
 failed to connect service at "localhost:9999": context deadline exceeded
 exit status 2
 ```
@@ -41,7 +41,7 @@ Installing from source (not recommended):
 
 ## Using the gRPC Health Checking Protocol
 
-To make use of the `grpc_health_probe`, your application must implement the
+To make use of the `grpc-health-probe`, your application must implement the
 [gRPC Health Checking Protocol v1][hc]. This means you must to register the
 `Health` service and implement the `rpc Check` that returns a `SERVING` status.
 
@@ -64,19 +64,19 @@ implementation details. This eliminates the need for you to implement the
 Kubernetes does not natively support gRPC health checking since it does not
 favor one RPC framework over another. Similarly, HTTP health probes Kubernetes
 has is not sufficient to craft a valid gRPC request. As a solution,
-`grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
+`grpc-health-probe` [can be used for Kubernetes][k8s] to health-check gRPC
 servers running in the Pod.
 
 You are recommended to use [Kubernetes `exec` probes][execprobe] and define
 liveness and/or readiness checks for your gRPC server pods.
 
-You can bundle the statically compiled `grpc_health_probe` in your container
+You can bundle the statically compiled `grpc-health-probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```
 RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-    chmod +x /bin/grpc_health_probe
+    wget -qO/bin/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc-health-probe-linux-amd64 && \
+    chmod +x /bin/grpc-health-probe
 ```
 
 In your Kubernetes Pod specification manifest, specify a `livenessProbe` and/or
@@ -91,11 +91,11 @@ spec:
     - containerPort: 5000
     readinessProbe:
       exec:
-        command: ["/bin/grpc_health_probe", "-addr=:5000"]
+        command: ["/bin/grpc-health-probe", "-addr=:5000"]
       initialDelaySeconds: 5
     livenessProbe:
       exec:
-        command: ["/bin/grpc_health_probe", "-addr=:5000"]
+        command: ["/bin/grpc-health-probe", "-addr=:5000"]
       initialDelaySeconds: 10
 ```
 
@@ -105,7 +105,7 @@ that implement the [gRPC Health Checking Protocol][hc].
 ## Health Checking TLS Servers
 
 If a gRPC server is serving traffic over TLS, or uses TLS client authentication
-to authorize clients, you can still use `grpc_health_probe` to check health
+to authorize clients, you can still use `grpc-health-probe` to check health
 with command-line options:
 
 | Option | Description |
@@ -134,7 +134,7 @@ environment variable.
 | **`-v`**    | verbose logs (default: false) |
 | **`-connect-timeout`** | timeout for establishing connection |
 | **`-rpc-timeout`** | timeout for health check rpc |
-| **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
+| **`-user-agent`** | user-agent header value of health check requests (default: grpc-health-probe) |
 | **`-service`** | service name to check (default: "") - empty string is convention for server health |
 | **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
 
@@ -152,7 +152,7 @@ environment variable.
    [cert](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/server1.pem) is signed for:
 
       ```sh
-      $ grpc_health_probe -addr 127.0.0.1:10000 \
+      $ grpc-health-probe -addr 127.0.0.1:10000 \
           -tls \
           -tls-ca-cert /path/to/testdata/ca.pem \
           -tls-server-name=x.test.youtube.com

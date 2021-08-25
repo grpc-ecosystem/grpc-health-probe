@@ -7,5 +7,5 @@ COPY . .
 RUN CGO_ENABLED=0 go install -a -tags netgo -ldflags=-w
 
 FROM alpine:3.8
-COPY --from=build /go/bin/grpc-health-probe /bin/grpc_health_probe
-ENTRYPOINT [ "/bin/grpc_health_probe" ]
+COPY --from=build /go/bin/grpc-health-probe /bin/grpc-health-probe
+ENTRYPOINT [ "/bin/grpc-health-probe" ]
