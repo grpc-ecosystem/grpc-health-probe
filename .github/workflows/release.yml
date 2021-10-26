@@ -4,7 +4,7 @@ on:
     tags:
     - 'v*.*.*'
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -13,32 +13,23 @@ jobs:
       uses: actions/setup-go@v1
       with:
         go-version: 1.17
-    - name: GoReleaser
+    - name: Setup ko
+      uses: imjasonh/setup-ko@v0.4
+      with:
+        version: v0.9.3
+    - name: Binary builds with GoReleaser
       uses: goreleaser/goreleaser-action@v1
       with:
         version: latest
         args: release --rm-dist
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push container image (linux/amd64)
+    - name: Build and push multi-arch container images
       run: |
         set -euo pipefail
         tag="$(git describe --tag --always --dirty)"
-        tar cv --owner=root:0 --group=root:0 --mtime='1970-01-01 00:00:00' \
-          --directory=dist/grpc-health-probe_linux_amd64 . |\
-            docker import \
-              --change 'ENTRYPOINT ["/grpc_health_probe"]' \
-              --change 'LABEL org.opencontainers.image.title="${{ github.repository }}"' \
-              --change 'LABEL org.opencontainers.image.source="https://github.com/${{ github.repository }}"' \
-              --change "LABEL org.opencontainers.image.version=${tag}" \
-              --change 'LABEL org.opencontainers.image.revision="${{ github.sha }}"' \
-              --platform linux/amd64 \
-              - "ghcr.io/${{ github.repository }}:${tag}"
-        docker push "ghcr.io/${{ github.repository }}:${tag}"
-
+        export KO_DOCKER_REPO="ghcr.io/${{ github.repository }}"
+        export PATH="$(go env GOPATH)/bin:$PATH"
+        echo "${{ github.token }}" | ko login ghcr.io --username ignored --password-stdin
+        set -x
+        ko publish --bare --tags "$tag" --platform=all .
