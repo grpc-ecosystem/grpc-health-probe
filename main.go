@@ -283,7 +283,7 @@ func main() {
 	rpcStart := time.Now()
 	rpcCtx, rpcCancel := context.WithTimeout(ctx, flRPCTimeout)
 	defer rpcCancel()
-	rpcCtx = metadata.NewOutgoingContext(ctx, flRPCHeaders.MD)
+	rpcCtx = metadata.NewOutgoingContext(rpcCtx, flRPCHeaders.MD)
 	resp, err := healthpb.NewHealthClient(conn).Check(rpcCtx,
 		&healthpb.HealthCheckRequest{
 			Service: flService})
