@@ -155,8 +155,9 @@ environment variable.
       $ grpc_health_probe -addr 127.0.0.1:10000 \
           -tls \
           -tls-ca-cert /path/to/testdata/ca.pem \
-          -tls-server-name=x.test.youtube.com \
-          -rpc-header=x-request-id:be59908d40f00be3573a50284c3863f1a37b8528
+          -tls-server-name=example.com \
+          -rpc-header=foo:bar \
+          -rpc-header=foo2:bar2
 
       status: SERVING
       ```
