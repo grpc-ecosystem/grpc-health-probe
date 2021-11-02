@@ -3,7 +3,6 @@
 ![ci](https://github.com/grpc-ecosystem/grpc-health-probe/workflows/ci/badge.svg)
 ![GitHub all releases](https://img.shields.io/github/downloads/grpc-ecosystem/grpc-health-probe/total)
 
-
 The `grpc_health_probe` utility allows you to query health of gRPC services that
 expose service their status through the [gRPC Health Checking Protocol][hc].
 
@@ -73,7 +72,7 @@ liveness and/or readiness checks for your gRPC server pods.
 You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
-```
+```bash
 RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /bin/grpc_health_probe
@@ -134,6 +133,7 @@ environment variable.
 | **`-v`**    | verbose logs (default: false) |
 | **`-connect-timeout`** | timeout for establishing connection |
 | **`-rpc-timeout`** | timeout for health check rpc |
+| **`-rpc-header`** | sends metadata in the RPC request context (default: empty map) |
 | **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
 | **`-service`** | service name to check (default: "") - empty string is convention for server health |
 | **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
@@ -155,7 +155,8 @@ environment variable.
       $ grpc_health_probe -addr 127.0.0.1:10000 \
           -tls \
           -tls-ca-cert /path/to/testdata/ca.pem \
-          -tls-server-name=x.test.youtube.com
+          -tls-server-name=x.test.youtube.com \
+          -rpc-header=x-request-id:be59908d40f00be3573a50284c3863f1a37b8528
 
       status: SERVING
       ```
