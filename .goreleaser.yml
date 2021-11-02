@@ -4,10 +4,8 @@ before:
 builds:
 - main: .
   binary: grpc_health_probe
-  flags:
-  - -tags=netgo
-  ldflags:
-  - -w
+  flags: ["-tags=netgo"] # sync changes to .ko.yml
+  ldflags: ["-w"]        # sync changes to .ko.yml
   env:
   - CGO_ENABLED=0
   goos:
