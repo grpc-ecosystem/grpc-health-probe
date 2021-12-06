@@ -16,12 +16,12 @@ success, otherwise it will exit with a non-zero exit code (documented below).
 **EXAMPLES**
 
 ```text
-$ grpc_health_probe -addr=localhost:5000
+$ grpc-health-probe -addr=localhost:5000
 healthy: SERVING
 ```
 
 ```text
-$ grpc_health_probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
+$ grpc-health-probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
 failed to connect service at "localhost:9999": context deadline exceeded
 exit status 2
 ```
