@@ -60,10 +60,11 @@ implementation details. This eliminates the need for you to implement the
 
 ## Example: gRPC health checking on Kubernetes
 
-Kubernetes does not natively support gRPC health checking since it does not
-favor one RPC framework over another. Similarly, HTTP health probes Kubernetes
-has is not sufficient to craft a valid gRPC request. As a solution,
-`grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
+Built-in gRPC probes were introduced in Kubernetes 1.23. To learn more,
+see [Configure Liveness, Readiness and Startup Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-grpc-liveness-probe).
+
+Kubernetes does not natively support gRPC health checking before the version 1.23.
+As a solution,`grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
 servers running in the Pod.
 
 You are recommended to use [Kubernetes `exec` probes][execprobe] and define
