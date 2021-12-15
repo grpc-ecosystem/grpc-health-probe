@@ -10,7 +10,7 @@ expose service their status through the [gRPC Health Checking Protocol][hc].
 [Kubernetes][k8s], using the [exec probes][execprobe].
 
 > :warning: [**Kubernetes v1.23 has now introduced built-in gRPC health checking**][k8s-new]
-> capability as an alpha feature. As a result, you might no longer to use this tool and use the
+> capability as an alpha feature. As a result, you might no longer need to use this tool and use the
 > native Kubernetes feature instead.
 >
 > This tool can still be useful if you are on older versions of Kubernetes,
