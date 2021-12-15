@@ -6,12 +6,20 @@
 The `grpc_health_probe` utility allows you to query health of gRPC services that
 expose service their status through the [gRPC Health Checking Protocol][hc].
 
+`grpc_health_probe` is meant to be used for health checking gRPC applications in
+[Kubernetes][k8s], using the [exec probes][execprobe].
+
+> :warning: [**Kubernetes v1.23 has now introduced built-in gRPC health checking**][k8s-new]
+> capability as an alpha feature. As a result, you might no longer to use this tool and use the
+> native Kubernetes feature instead.
+>
+> This tool can still be useful if you are on older versions of Kubernetes,
+> or using advanced configuration (such as custom metadata, TLS or finer timeout tuning),
+> or not using Kubernetes at all.
+
 This command-line utility makes a RPC to `/grpc.health.v1.Health/Check`. If it
 responds with a `SERVING` status, the `grpc_health_probe` will exit with
 success, otherwise it will exit with a non-zero exit code (documented below).
-
-`grpc_health_probe` is meant to be used for health checking gRPC applications in
-[Kubernetes][k8s], using the [exec probes][execprobe].
 
 **EXAMPLES**
 
@@ -186,3 +194,4 @@ This is not an official Google project.
 [rel]: https://github.com/grpc-ecosystem/grpc-health-probe/releases
 [spiffe]: https://github.com/spiffe/spiffe/blob/master/standards/SPIFFE_Workload_API.md
 [spiffe-socket]: https://github.com/spiffe/spiffe/blob/0f44285b4caa95244ecbf003dd6729d5295ae743/standards/SPIFFE_Workload_Endpoint.md#4-locating-the-endpoint
+[k8s-new]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-grpc-liveness-probe
