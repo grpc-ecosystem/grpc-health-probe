@@ -32,6 +32,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/alts"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -50,6 +51,7 @@ var (
 	flTLSClientCert string
 	flTLSClientKey  string
 	flTLSServerName string
+	flALTS          bool
 	flVerbose       bool
 	flGZIP          bool
 	flSPIFFE        bool
@@ -85,6 +87,7 @@ func init() {
 	flagSet.StringVar(&flTLSClientCert, "tls-client-cert", "", "(with -tls, optional) client certificate for authenticating to the server (requires -tls-client-key)")
 	flagSet.StringVar(&flTLSClientKey, "tls-client-key", "", "(with -tls) client private key for authenticating to the server (requires -tls-client-cert)")
 	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
+	flagSet.BoolVar(&flALTS, "alts", false, "use ALTS (default: false, INSECURE plaintext transport)")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
 	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
 	flagSet.BoolVar(&flSPIFFE, "spiffe", false, "use SPIFFE to obtain mTLS credentials")
@@ -107,6 +110,12 @@ func init() {
 	}
 	if flRPCTimeout <= 0 {
 		argError("-rpc-timeout must be greater than zero (specified: %v)", flRPCTimeout)
+	}
+	if flALTS && flSPIFFE {
+		argError("-alts and -spiffe are mutually incompatible")
+	}
+	if flTLS && flALTS {
+		argError("cannot specify -tls with -alts")
 	}
 	if !flTLS && flTLSNoVerify {
 		argError("specified -tls-no-verify without specifying -tls")
@@ -147,6 +156,7 @@ func init() {
 			log.Printf("  > client-key=%s", flTLSClientKey)
 			log.Printf("  > server-name=%s", flTLSServerName)
 		}
+		log.Printf("> alts=%v", flALTS)
 		log.Printf("> spiffe=%v", flSPIFFE)
 	}
 }
@@ -229,6 +239,9 @@ func main() {
 			retcode = StatusInvalidArguments
 			return
 		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else if flALTS {
+		creds := alts.NewServerCreds(alts.DefaultServerOptions())
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else if flSPIFFE {
 		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
