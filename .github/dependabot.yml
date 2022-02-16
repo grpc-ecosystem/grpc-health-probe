@@ -4,6 +4,12 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+registries:
+  dockerhub: # Define access for a private registry 
+    type: docker-registry
+    url: ${{secrets.ARTIFACTORY_URL}}
+    username: ${{secrets.XMIX_PUBLISH_USERNAME}}
+    password: ${{secrets.XMIX_PUBLISH_PASSWORD}}
 updates:
   # Enable version updates for Docker
   - package-ecosystem: "docker"
