@@ -5,9 +5,9 @@
 
 version: 2
 registries:
-  dockerhub: # Define access for a private registry 
+  jfrog: # Define access for a private registry 
     type: docker-registry
-    url: ${{secrets.ARTIFACTORY_URL}}
+    url: https://entrd-jfrog.ent.nuance.com
     username: ${{secrets.XMIX_PUBLISH_USERNAME}}
     password: ${{secrets.XMIX_PUBLISH_PASSWORD}}
 updates:
@@ -16,7 +16,7 @@ updates:
     # Look for a `Dockerfile` in the `root` directory
     directory: "/"
     registries:
-      - docker-registry
+      - jfrog
     # Check for updates once a week
     schedule:
       interval: "weekly"
