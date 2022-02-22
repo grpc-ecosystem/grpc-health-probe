@@ -17,6 +17,6 @@ updates:
     directory: "/"
     registries:
       - docker-registry
-      # Check for updates once a week
+    # Check for updates once a week
     schedule:
       interval: "weekly"
