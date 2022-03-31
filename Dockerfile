@@ -1,4 +1,4 @@
-FROM entrd-jfrog.ent.nuance.com/docker.io/golang:1.17.7-alpine as builder
+FROM entrd-jfrog.ent.nuance.com/docker.io/golang:1.17.8-alpine as builder
 ENV PROJECT grpc_health_probe
 WORKDIR /src/$PROJECT
 COPY go.mod go.sum ./
