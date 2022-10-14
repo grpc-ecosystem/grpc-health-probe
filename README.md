@@ -43,7 +43,7 @@ exit status 2
 Installing from source (not recommended):
 
 - Make sure you have `git` and `go` installed.
-- Run: `go get github.com/grpc-ecosystem/grpc-health-probe`
+- Run: `go install github.com/grpc-ecosystem/grpc-health-probe@latest`
 - This will compile the binary into your `$GOPATH/bin` (or `$HOME/go/bin`).
 
 ## Using the gRPC Health Checking Protocol
@@ -81,7 +81,7 @@ You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```bash
-RUN GRPC_HEALTH_PROBE_VERSION=v0.3.1 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.13 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /bin/grpc_health_probe
 ```
