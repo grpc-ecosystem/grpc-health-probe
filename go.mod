@@ -14,7 +14,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
 
