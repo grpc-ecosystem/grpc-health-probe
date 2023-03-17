@@ -1,3 +1,5 @@
+.vscode
+
 # ignore "go build" output
 grpc_health_probe
 grpc-health-probe
