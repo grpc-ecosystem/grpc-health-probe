@@ -1,7 +1,7 @@
 module github.com/grpc-ecosystem/grpc-health-probe
 
 require (
-	github.com/spiffe/go-spiffe/v2 v2.1.4
+	github.com/spiffe/go-spiffe/v2 v2.1.5
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
