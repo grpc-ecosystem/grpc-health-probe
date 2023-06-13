@@ -145,6 +145,7 @@ environment variable.
 | **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
 | **`-service`** | service name to check (default: "") - empty string is convention for server health |
 | **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
+| **`-version`** | print the probe version and exit |
 
 **Example:**
 
@@ -182,6 +183,7 @@ a non-zero exit code.
 | **2** | failure: connection failed or timed out |
 | **3** | failure: rpc failed or timed out |
 | **4** | failure: rpc successful, but the response is not `SERVING` |
+| **5** | failure: service intentionally not checked, eg was run with `-version` |
 | **20** | failure: could not retrieve TLS credentials using the [SPIFFE Workload API][spiffe] |
 
 ----
