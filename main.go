@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"time"
 	"unicode"
@@ -53,6 +54,7 @@ var (
 	flTLSServerName string
 	flALTS          bool
 	flVerbose       bool
+	flVersion       bool
 	flGZIP          bool
 	flSPIFFE        bool
 )
@@ -66,6 +68,8 @@ const (
 	StatusRPCFailure = 3
 	// StatusUnhealthy indicates rpc succeeded but indicates unhealthy service.
 	StatusUnhealthy = 4
+	// StatusNotChecked indicates service status was intentionally not checked.
+	StatusNotChecked = 5
 	// StatusSpiffeFailed indicates failure to retrieve credentials using spiffe workload API
 	StatusSpiffeFailed = 20
 )
@@ -89,6 +93,7 @@ func init() {
 	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
 	flagSet.BoolVar(&flALTS, "alts", false, "use ALTS (default: false, INSECURE plaintext transport)")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
+	flagSet.BoolVar(&flVersion, "version", false, "show probe version and exit")
 	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
 	flagSet.BoolVar(&flSPIFFE, "spiffe", false, "use SPIFFE to obtain mTLS credentials")
 
@@ -100,6 +105,11 @@ func init() {
 	argError := func(s string, v ...interface{}) {
 		log.Printf("error: "+s, v...)
 		os.Exit(StatusInvalidArguments)
+	}
+
+	if flVersion {
+		log.Println(probeVersion())
+		os.Exit(StatusNotChecked)
 	}
 
 	if flAddr == "" {
@@ -204,6 +214,31 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 		cfg.ServerName = serverName
 	}
 	return credentials.NewTLS(&cfg), nil
+}
+
+func probeVersion() string {
+	version := "vcs info was not included in build"
+
+	vcsDetails := map[string]string{"vcs": "", "vcs.revision": "", "vcs.time": "", "vcs.modified": ""}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			if _, ok := vcsDetails[setting.Key]; ok {
+				vcsDetails[setting.Key] = setting.Value
+			}
+		}
+	}
+	if vcsDetails["vcs"] == "" {
+		return version
+	}
+
+	version = strings.Join(
+		[]string{vcsDetails["vcs"], vcsDetails["vcs.revision"], vcsDetails["vcs.time"]},
+		" ",
+	)
+	if vcsDetails["vcs.modified"] == "true" {
+		version = version + " (built with changes outside version control)"
+	}
+	return version
 }
 
 func main() {
