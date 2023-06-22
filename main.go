@@ -216,21 +216,20 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 
 func probeVersion() string {
 	version := "vcs info was not included in build"
+	dirty := ""
 
-	vcsDetails := map[string]string{"vcs.revision": "", "vcs.modified": ""}
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, setting := range info.Settings {
-			if _, ok := vcsDetails[setting.Key]; ok {
-				vcsDetails[setting.Key] = setting.Value
+
+			switch setting.Key {
+			case "vcs.revision":
+				version = setting.Value
+			case "vcs.modified":
+			        dirty = setting.Value
 			}
 		}
 	}
-	if vcsDetails["vcs.revision"] == "" {
-		return version
-	}
-
-	version = "commit " + vcsDetails["vcs.revision"]
-	if vcsDetails["vcs.modified"] == "true" {
+	if dirty == "true" {
 		version = version + " (dirty)"
 	}
 	return version
