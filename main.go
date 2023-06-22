@@ -68,8 +68,6 @@ const (
 	StatusRPCFailure = 3
 	// StatusUnhealthy indicates rpc succeeded but indicates unhealthy service.
 	StatusUnhealthy = 4
-	// StatusNotChecked indicates service status was intentionally not checked.
-	StatusNotChecked = 5
 	// StatusSpiffeFailed indicates failure to retrieve credentials using spiffe workload API
 	StatusSpiffeFailed = 20
 )
@@ -108,8 +106,8 @@ func init() {
 	}
 
 	if flVersion {
-		log.Println(probeVersion())
-		os.Exit(StatusNotChecked)
+		fmt.Println(probeVersion())
+		os.Exit(0)
 	}
 
 	if flAddr == "" {
@@ -219,7 +217,7 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 func probeVersion() string {
 	version := "vcs info was not included in build"
 
-	vcsDetails := map[string]string{"vcs": "", "vcs.revision": "", "vcs.time": "", "vcs.modified": ""}
+	vcsDetails := map[string]string{"vcs.revision": "", "vcs.modified": ""}
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, setting := range info.Settings {
 			if _, ok := vcsDetails[setting.Key]; ok {
@@ -227,16 +225,13 @@ func probeVersion() string {
 			}
 		}
 	}
-	if vcsDetails["vcs"] == "" {
+	if vcsDetails["vcs.revision"] == "" {
 		return version
 	}
 
-	version = strings.Join(
-		[]string{vcsDetails["vcs"], vcsDetails["vcs.revision"], vcsDetails["vcs.time"]},
-		" ",
-	)
+	version = "commit " + vcsDetails["vcs.revision"]
 	if vcsDetails["vcs.modified"] == "true" {
-		version = version + " (built with changes outside version control)"
+		version = version + " (dirty)"
 	}
 	return version
 }
