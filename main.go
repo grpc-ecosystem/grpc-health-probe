@@ -225,7 +225,7 @@ func probeVersion() string {
 			case "vcs.revision":
 				version = "commit " + setting.Value
 			case "vcs.modified":
-			        dirty = setting.Value
+				dirty = setting.Value
 			}
 		}
 	}
