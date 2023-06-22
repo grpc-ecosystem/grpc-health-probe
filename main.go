@@ -223,7 +223,7 @@ func probeVersion() string {
 
 			switch setting.Key {
 			case "vcs.revision":
-				version = setting.Value
+				version = "commit " + setting.Value
 			case "vcs.modified":
 			        dirty = setting.Value
 			}
