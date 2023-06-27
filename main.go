@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"time"
 	"unicode"
@@ -53,6 +54,7 @@ var (
 	flTLSServerName string
 	flALTS          bool
 	flVerbose       bool
+	flVersion       bool
 	flGZIP          bool
 	flSPIFFE        bool
 )
@@ -89,6 +91,7 @@ func init() {
 	flagSet.StringVar(&flTLSServerName, "tls-server-name", "", "(with -tls) override the hostname used to verify the server certificate")
 	flagSet.BoolVar(&flALTS, "alts", false, "use ALTS (default: false, INSECURE plaintext transport)")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
+	flagSet.BoolVar(&flVersion, "version", false, "show probe version and exit")
 	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
 	flagSet.BoolVar(&flSPIFFE, "spiffe", false, "use SPIFFE to obtain mTLS credentials")
 
@@ -100,6 +103,11 @@ func init() {
 	argError := func(s string, v ...interface{}) {
 		log.Printf("error: "+s, v...)
 		os.Exit(StatusInvalidArguments)
+	}
+
+	if flVersion {
+		fmt.Println(probeVersion())
+		os.Exit(0)
 	}
 
 	if flAddr == "" {
@@ -204,6 +212,27 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 		cfg.ServerName = serverName
 	}
 	return credentials.NewTLS(&cfg), nil
+}
+
+func probeVersion() string {
+	version := "vcs info was not included in build"
+	dirty := ""
+
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+
+			switch setting.Key {
+			case "vcs.revision":
+				version = "commit " + setting.Value
+			case "vcs.modified":
+				dirty = setting.Value
+			}
+		}
+	}
+	if dirty == "true" {
+		version = version + " (dirty)"
+	}
+	return version
 }
 
 func main() {
