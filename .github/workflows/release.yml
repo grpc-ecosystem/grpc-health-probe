@@ -18,10 +18,10 @@ jobs:
       with:
         version: v0.9.3
     - name: Binary builds with GoReleaser
-      uses: goreleaser/goreleaser-action@v1
+      uses: goreleaser/goreleaser-action@v5
       with:
         version: latest
-        args: release --rm-dist
+        args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push multi-arch container images
