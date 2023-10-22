@@ -5,7 +5,7 @@ builds:
 - main: .
   binary: grpc_health_probe
   flags: ["-tags=netgo"] # sync changes to .ko.yml
-  ldflags: ["-w"]        # sync changes to .ko.yml
+  ldflags: ["-w -X main.versionTag={{.Version}}"] # sync changes to .ko.yml
   env:
   - CGO_ENABLED=0
   goos:

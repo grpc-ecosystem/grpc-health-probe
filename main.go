@@ -214,6 +214,8 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 	return credentials.NewTLS(&cfg), nil
 }
 
+var versionTag = "" // set from git tag via ldflags during build
+
 func probeVersion() string {
 	version := "vcs info was not included in build"
 	dirty := ""
@@ -231,6 +233,10 @@ func probeVersion() string {
 	}
 	if dirty == "true" {
 		version = version + " (dirty)"
+	}
+
+	if versionTag != "" {
+		version = fmt.Sprintf("%s; %s", versionTag, version)
 	}
 	return version
 }
