@@ -27,6 +27,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push multi-arch container images
+      env:
+        VERSION_TAG: ${GITHUB_REF_NAME#v}
       run: |
         set -euo pipefail
         tag="$(git describe --tag --always --dirty)"
