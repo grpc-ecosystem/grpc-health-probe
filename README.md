@@ -24,12 +24,12 @@ success, otherwise it will exit with a non-zero exit code (documented below).
 **EXAMPLES**
 
 ```text
-$ grpc_health_probe -addr=localhost:5000
+$ grpc-health-probe -addr=localhost:5000
 healthy: SERVING
 ```
 
 ```text
-$ grpc_health_probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
+$ grpc-health-probe -addr=localhost:9999 -connect-timeout 250ms -rpc-timeout 100ms
 failed to connect service at "localhost:9999": context deadline exceeded
 exit status 2
 ```
@@ -161,7 +161,7 @@ environment variable.
    [cert](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/server1.pem) is signed for:
 
       ```sh
-      $ grpc_health_probe -addr 127.0.0.1:10000 \
+      $ grpc-health-probe -addr 127.0.0.1:10000 \
           -tls \
           -tls-ca-cert /path/to/testdata/ca.pem \
           -tls-server-name=example.com \
