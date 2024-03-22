@@ -1,6 +1,6 @@
 # You may not need that anymore
 
-Since version 1.24, Kubernetes provided native support for GRPC health checks.
+Since version 1.24, Kubernetes provided [native support for GRPC health checks]( https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-grpc-liveness-probe).
 
 ```yaml
           livenessProbe:
