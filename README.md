@@ -1,3 +1,18 @@
+# You may not need that anymore
+
+Since version 1.24, Kubernetes provided native support for GRPC health checks.
+
+```yaml
+          livenessProbe:
+            initialDelaySeconds: 10
+            grpc:
+              port: 5000 # service GRPC port
+          readinessProbe:
+            initialDelaySeconds: 5
+            grpc:
+              port: 5000 # service GRPC port
+```
+
 # grpc_health_probe(1)
 
 ![ci](https://github.com/grpc-ecosystem/grpc-health-probe/workflows/ci/badge.svg)
