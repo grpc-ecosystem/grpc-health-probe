@@ -9,9 +9,8 @@ expose service their status through the [gRPC Health Checking Protocol][hc].
 `grpc_health_probe` is meant to be used for health checking gRPC applications in
 [Kubernetes][k8s], using the [exec probes][execprobe].
 
-> :warning: [**Kubernetes v1.23 has now introduced built-in gRPC health checking**][k8s-new]
-> capability as an alpha feature. As a result, you might no longer need to use this tool and use the
-> native Kubernetes feature instead.
+> :warning: [**Kubernetes has now built-in gRPC health checking**][k8s-new]
+> capability as generally available. As a result, you might no longer need to use this tool and can use the native Kubernetes feature instead.
 >
 > This tool can still be useful if you are on older versions of Kubernetes,
 > or using advanced configuration (such as custom metadata, TLS or finer timeout tuning),
@@ -68,9 +67,9 @@ implementation details. This eliminates the need for you to implement the
 
 ## Example: gRPC health checking on Kubernetes
 
-Kubernetes does not natively support gRPC health checking since it does not
-favor one RPC framework over another. Similarly, HTTP health probes Kubernetes
-has is not sufficient to craft a valid gRPC request. As a solution,
+Kubernetes now supports [gRPC health checking][k8s]. If your cluster is running a version that supports gRPC health checking, you can define a gRPC liveness probe in your Pod specification. For more information on how to define a gRPC liveness probe in Kubernetes, see the [Kubernetes documentation][k8s-new].
+
+However, if your Kubernetes version does not support gRPC health checking or if you want to use some advanced features that Kubernetes does not support, you can use `grpc_health_probe` to health-check your gRPC server. As a solution, 
 `grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
 servers running in the Pod.
 
