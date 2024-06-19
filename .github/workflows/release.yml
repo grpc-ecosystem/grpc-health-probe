@@ -20,7 +20,7 @@ jobs:
       with:
         version: v0.9.3
     - name: Binary builds with GoReleaser
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v6
       with:
         version: latest
         args: release --clean
