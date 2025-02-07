@@ -7,9 +7,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
+    permissions: write-all
     steps:
     - name: Checkout
       uses: actions/checkout@master
