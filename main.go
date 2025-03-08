@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,9 +17,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -34,6 +34,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/alts"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/encoding/gzip"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -62,7 +64,7 @@ var (
 const (
 	// StatusInvalidArguments indicates specified invalid arguments.
 	StatusInvalidArguments = 1
-	// StatusConnectionFailure indicates connection failed.
+	// StatusConnectionFailure indicates the connection failed.
 	StatusConnectionFailure = 2
 	// StatusRPCFailure indicates rpc failed.
 	StatusRPCFailure = 3
@@ -199,7 +201,7 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 	} else if caCerts != "" {
 		// override system roots
 		rootCAs := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(caCerts)
+		pem, err := os.ReadFile(caCerts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load root CA certificates from file (%s) error=%v", caCerts, err)
 		}
@@ -242,8 +244,8 @@ func probeVersion() string {
 }
 
 func main() {
-	retcode := 0
-	defer func() { os.Exit(retcode) }()
+	retCode := 0
+	defer func() { os.Exit(retCode) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -264,14 +266,14 @@ func main() {
 	}
 	if flTLS && flSPIFFE {
 		log.Printf("-tls and -spiffe are mutually incompatible")
-		retcode = StatusInvalidArguments
+		retCode = StatusInvalidArguments
 		return
 	}
 	if flTLS {
 		creds, err := buildCredentials(flTLSNoVerify, flTLSCACert, flTLSClientCert, flTLSClientKey, flTLSServerName)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials. error=%v", err)
-			retcode = StatusInvalidArguments
+			retCode = StatusInvalidArguments
 			return
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
@@ -279,11 +281,13 @@ func main() {
 		creds := alts.NewServerCreds(alts.DefaultServerOptions())
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else if flSPIFFE {
-		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
+		spiffeCtx, timeoutCancel := context.WithTimeout(ctx, flRPCTimeout)
+		defer timeoutCancel()
+
 		source, err := workloadapi.NewX509Source(spiffeCtx)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials with spiffe. error=%v", err)
-			retcode = StatusSpiffeFailed
+			retCode = StatusSpiffeFailed
 			return
 		}
 		if flVerbose {
@@ -296,34 +300,31 @@ func main() {
 		creds := credentials.NewTLS(tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()))
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-
 	if flGZIP {
-		opts = append(opts,
-			grpc.WithCompressor(grpc.NewGZIPCompressor()),
-			grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
-		)
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
 	}
-
 	if flVerbose {
 		log.Print("establishing connection")
 	}
+
 	connStart := time.Now()
 	dialCtx, dialCancel := context.WithTimeout(ctx, flConnTimeout)
 	defer dialCancel()
 	conn, err := grpc.DialContext(dialCtx, flAddr, opts...)
 	if err != nil {
-		if err == context.DeadlineExceeded {
+		if errors.Is(err, context.DeadlineExceeded) {
 			log.Printf("timeout: failed to connect service %q within %v", flAddr, flConnTimeout)
 		} else {
 			log.Printf("error: failed to connect service at %q: %+v", flAddr, err)
 		}
-		retcode = StatusConnectionFailure
+		retCode = StatusConnectionFailure
 		return
 	}
+	defer func() { _ = conn.Close() }()
+
 	connDuration := time.Since(connStart)
-	defer conn.Close()
 	if flVerbose {
 		log.Printf("connection established (took %v)", connDuration)
 	}
@@ -343,14 +344,14 @@ func main() {
 		} else {
 			log.Printf("error: health rpc failed: %+v", err)
 		}
-		retcode = StatusRPCFailure
+		retCode = StatusRPCFailure
 		return
 	}
 	rpcDuration := time.Since(rpcStart)
 
 	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
 		log.Printf("service unhealthy (responded with %q)", resp.GetStatus().String())
-		retcode = StatusUnhealthy
+		retCode = StatusUnhealthy
 		return
 	}
 	if flVerbose {
