@@ -48,20 +48,20 @@ Installing from source (not recommended):
 ## Using the gRPC Health Checking Protocol
 
 To make use of the `grpc_health_probe`, your application must implement the
-[gRPC Health Checking Protocol v1][hc]. This means you must to register the
+[gRPC Health Checking Protocol v1][hc]. This means you must register the
 `Health` service and implement the `rpc Check` that returns a `SERVING` status.
 
 Since the Health Checking protocol is part of the gRPC core, it has
 packages/libraries available for the languages supported by gRPC:
 
 [[health.proto](https://github.com/grpc/grpc/blob/master/src/proto/grpc/health/v1/health.proto)]
-[[Go](https://godoc.org/google.golang.org/grpc/health/grpc_health_v1)]
+[[Go](https://pkg.go.dev/google.golang.org/grpc/health/grpc_health_v1)]
 [[Java](https://github.com/grpc/grpc-java/blob/master/services/src/generated/main/grpc/io/grpc/health/v1/HealthGrpc.java)]
 [[Python](https://github.com/grpc/grpc/tree/master/src/python/grpcio_health_checking)]
 [[C#](https://github.com/grpc/grpc/tree/master/src/csharp/Grpc.HealthCheck)/[NuGet](https://www.nuget.org/packages/Grpc.HealthCheck/)]
 [[Ruby](https://www.rubydoc.info/gems/grpc/Grpc/Health/Checker)] ...
 
-Most of the languages listed above provide helper functions that hides
+Most of the languages listed above provide helper functions that hide
 implementation details. This eliminates the need for you to implement the
 `Check` rpc yourself.
 
@@ -80,7 +80,7 @@ You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```bash
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.13 && \
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.37 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
     chmod +x /bin/grpc_health_probe
 ```
@@ -105,7 +105,7 @@ spec:
       initialDelaySeconds: 10
 ```
 
-This approach provide proper readiness/liveness checking to your applications
+This approach provides proper readiness/liveness checking to your applications
 that implement the [gRPC Health Checking Protocol][hc].
 
 ## Health Checking TLS Servers
