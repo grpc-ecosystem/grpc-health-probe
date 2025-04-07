@@ -5,7 +5,7 @@ require (
 	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 )
 
 require (
@@ -19,3 +19,4 @@ require (
 )
 
 go 1.23
+toolchain go1.24.1
