@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
   - go mod download
@@ -28,5 +29,5 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 archives:
-  - format: binary
+  - formats: [ binary ]
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
