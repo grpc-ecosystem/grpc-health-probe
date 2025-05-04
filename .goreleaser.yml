@@ -31,3 +31,9 @@ checksum:
 archives:
   - formats: [ binary ]
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
+release:
+  footer: >-
+
+    **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    **Open Source Insights**: [{{ .Tag }}](https://deps.dev/go/github.com%2Fgrpc-ecosystem%2Fgrpc-health-probe/{{ .Tag }}) (compare to [{{ .PreviousTag }}](https://deps.dev/go/github.com%2Fgrpc-ecosystem%2Fgrpc-health-probe/{{ .PreviousTag }}/compare?v2={{ .Tag }}))
