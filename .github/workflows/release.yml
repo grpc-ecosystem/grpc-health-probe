@@ -16,9 +16,9 @@ jobs:
       with:
         go-version: '1.24'
     - name: Setup ko
-      uses: imjasonh/setup-ko@v0.9
+      uses: ko-build/setup-ko@v0.9
       with:
-        version: v0.9.3
+        version: v0.17.1
     - name: Binary builds with GoReleaser
       uses: goreleaser/goreleaser-action@v6
       with:
