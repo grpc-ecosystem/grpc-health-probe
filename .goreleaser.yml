@@ -20,11 +20,14 @@ builds:
   - arm64
   - ppc64le
   - s390x
+  - riscv64
   ignore:
   - {goos: "darwin", goarch: "386"}
+  - {goos: "darwin", goarch: "riscv64"}
   - {goos: "windows", goarch: "386"}
   - {goos: "windows", goarch: "arm"}
-  goarm: [6]
+  - {goos: "windows", goarch: "riscv64"}
+  goarm: ["6"]
 checksum:
   name_template: "checksums.txt"
   algorithm: sha256
