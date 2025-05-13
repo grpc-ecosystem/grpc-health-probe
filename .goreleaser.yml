@@ -40,8 +40,6 @@ kos:  # See https://goreleaser.com/customization/ko/
     - ghcr.io/stefanb/grpc-health-probe
     tags:
     - '{{.Version}}'
-    - '{{ .Major }}.{{ .Minor }}'
-    - latest
     bare: true
     preserve_import_paths: false
     platforms:
