@@ -36,9 +36,7 @@ archives:
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
 
 kos:  # See https://goreleaser.com/customization/ko/
-  - repositories:
-    - ghcr.io/stefanb/grpc-health-probe
-    tags:
+  - tags:
     - '{{.Version}}'
     bare: true
     preserve_import_paths: false
