@@ -15,10 +15,14 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.24'
-    - name: Setup ko
-      uses: ko-build/setup-ko@v0.9
+
+    - name: Container registry login
+      uses: docker/login-action@v3
       with:
-        version: v0.17.1
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Binary builds with GoReleaser
       uses: goreleaser/goreleaser-action@v6
       with:
@@ -26,14 +30,4 @@ jobs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push multi-arch container images
-      env:
-        VERSION_TAG: ${GITHUB_REF_NAME#v}
-      run: |
-        set -euo pipefail
-        tag="$(git describe --tag --always --dirty)"
-        export KO_DOCKER_REPO="ghcr.io/${{ github.repository }}"
-        export PATH="$(go env GOPATH)/bin:$PATH"
-        echo "${{ github.token }}" | ko login ghcr.io --username ignored --password-stdin
-        set -x
-        ko publish --bare --tags "$tag" --platform=all .
+        KO_DOCKER_REPO: "ghcr.io/${{ github.repository }}"

@@ -34,8 +34,20 @@ checksum:
 archives:
   - formats: [ binary ]
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
+
+kos:  # See https://goreleaser.com/customization/ko/
+  - repositories:
+    - ghcr.io/stefanb/grpc-health-probe
+    tags:
+    - '{{.Version}}'
+    bare: true
+    preserve_import_paths: false
+    platforms:
+    - linux/amd64
+
 release:
   footer: >-
+    **Container Image**: `ghcr.io/stefanb/grpc-health-probe:{{ .Tag }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 
