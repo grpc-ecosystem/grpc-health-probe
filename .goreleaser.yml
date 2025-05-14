@@ -42,13 +42,11 @@ kos:  # See https://goreleaser.com/customization/ko/
     preserve_import_paths: false
     base_image: "gcr.io/distroless/static:nonroot"
     platforms:
-    - linux/386
     - linux/amd64
     - linux/arm/v7
     - linux/arm64/v8
     - linux/ppc64le
     - linux/s390x
-    - linux/riscv64
 
 release:
   footer: |
