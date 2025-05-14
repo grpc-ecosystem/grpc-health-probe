@@ -16,4 +16,6 @@ jobs:
       uses: goreleaser/goreleaser-action@v6
       with:
         version: latest
-        args: release --snapshot --clean 
+        args: release --snapshot --clean --skip ko
+      env:
+        KO_DOCKER_REPO: "dummy"
