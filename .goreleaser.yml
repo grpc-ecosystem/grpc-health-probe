@@ -51,7 +51,7 @@ kos:  # See https://goreleaser.com/customization/ko/
 
 release:
   footer: >-
-    **Container Image**: `ghcr.io/stefanb/grpc-health-probe:{{ .Version }}`
+    **Container Image**: `{{ .Env.KO_DOCKER_REPO }}:{{ .Version }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 
