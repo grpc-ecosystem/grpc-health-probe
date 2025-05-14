@@ -51,8 +51,8 @@ kos:  # See https://goreleaser.com/customization/ko/
     - linux/riscv64
 
 release:
-  footer: >-
-    **Container Image**: `{{ .Env.KO_DOCKER_REPO }}:{{ .Version }}`
+  footer: |
+    **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Version }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 
