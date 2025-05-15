@@ -37,7 +37,7 @@ archives:
 
 kos:  # See https://goreleaser.com/customization/ko/
   - tags:
-    - '{{.Version}}'
+    - '{{.Tag}}'
     bare: true
     preserve_import_paths: false
     base_image: "gcr.io/distroless/static:nonroot"
@@ -50,7 +50,7 @@ kos:  # See https://goreleaser.com/customization/ko/
 
 release:
   footer: |
-    **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Version }}`
+    **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Tag }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 
