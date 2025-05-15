@@ -80,9 +80,16 @@ You can bundle the statically compiled `grpc_health_probe` in your container
 image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```bash
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.13 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+ARG TARGETOS TARGETARCH
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.38 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-${TARGETOS}-${TARGETARCH} && \
     chmod +x /bin/grpc_health_probe
+```
+
+or via release image:
+
+```dockerfile
+COPY --from=ghcr.io/grpc-ecosystem/grpc-health-probe:v0.4.38 /ko-app/grpc-health-probe /bin/grpc_health_probe
 ```
 
 In your Kubernetes Pod specification manifest, specify a `livenessProbe` and/or
