@@ -2,12 +2,18 @@ name: ci
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@master
+      with:
+        persist-credentials: false
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
@@ -16,4 +22,6 @@ jobs:
       uses: goreleaser/goreleaser-action@v6
       with:
         version: latest
-        args: release --snapshot --clean 
+        args: release --snapshot --clean --skip ko
+      env:
+        KO_DOCKER_REPO: "dummy"
