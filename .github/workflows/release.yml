@@ -3,6 +3,11 @@ on:
   push:
     tags:
     - 'v*.*.*'
+
+permissions: 
+  contents: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -11,6 +16,7 @@ jobs:
       uses: actions/checkout@master
       with:
         fetch-depth: 0
+        persist-credentials: false
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
