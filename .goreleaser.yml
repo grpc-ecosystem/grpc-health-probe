@@ -34,8 +34,23 @@ checksum:
 archives:
   - formats: [ binary ]
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
+
+kos:  # See https://goreleaser.com/customization/ko/
+  - tags:
+    - '{{.Tag}}'
+    bare: true
+    preserve_import_paths: false
+    base_image: "gcr.io/distroless/static:nonroot"
+    platforms:
+    - linux/amd64
+    - linux/arm/v7
+    - linux/arm64/v8
+    - linux/ppc64le
+    - linux/s390x
+
 release:
-  footer: >-
+  footer: |
+    **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Tag }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 

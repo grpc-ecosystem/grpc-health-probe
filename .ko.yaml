@@ -1,5 +1,0 @@
-defaultBaseImage: gcr.io/distroless/static
-builds:
-- id: grpc_health_probe
-  flags: ["-tags=netgo"] # sync changes to .goreleaser.yml
-  ldflags: ["-w -X main.versionTag={{.Env.VERSION_TAG}}"] # sync changes to .goreleaser.yml
