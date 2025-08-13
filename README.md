@@ -48,20 +48,20 @@ Installing from source (not recommended):
 ## Using the gRPC Health Checking Protocol
 
 To make use of the `grpc_health_probe`, your application must implement the
-[gRPC Health Checking Protocol v1][hc]. This means you must to register the
+[gRPC Health Checking Protocol v1][hc]. This means you must register the
 `Health` service and implement the `rpc Check` that returns a `SERVING` status.
 
 Since the Health Checking protocol is part of the gRPC core, it has
 packages/libraries available for the languages supported by gRPC:
 
 [[health.proto](https://github.com/grpc/grpc/blob/master/src/proto/grpc/health/v1/health.proto)]
-[[Go](https://godoc.org/google.golang.org/grpc/health/grpc_health_v1)]
+[[Go](https://pkg.go.dev/google.golang.org/grpc/health/grpc_health_v1)]
 [[Java](https://github.com/grpc/grpc-java/blob/master/services/src/generated/main/grpc/io/grpc/health/v1/HealthGrpc.java)]
 [[Python](https://github.com/grpc/grpc/tree/master/src/python/grpcio_health_checking)]
 [[C#](https://github.com/grpc/grpc/tree/master/src/csharp/Grpc.HealthCheck)/[NuGet](https://www.nuget.org/packages/Grpc.HealthCheck/)]
 [[Ruby](https://www.rubydoc.info/gems/grpc/Grpc/Health/Checker)] ...
 
-Most of the languages listed above provide helper functions that hides
+Most of the languages listed above provide helper functions that hide
 implementation details. This eliminates the need for you to implement the
 `Check` rpc yourself.
 
@@ -69,7 +69,7 @@ implementation details. This eliminates the need for you to implement the
 
 Kubernetes now supports [gRPC health checking][k8s]. If your cluster is running a version that supports gRPC health checking, you can define a gRPC liveness probe in your Pod specification. For more information on how to define a gRPC liveness probe in Kubernetes, see the [Kubernetes documentation][k8s-new].
 
-However, if your Kubernetes version does not support gRPC health checking or if you want to use some advanced features that Kubernetes does not support, you can use `grpc_health_probe` to health-check your gRPC server. As a solution, 
+However, if your Kubernetes version does not support gRPC health checking or if you want to use some advanced features that Kubernetes does not support, you can use `grpc_health_probe` to health-check your gRPC server. As a solution,
 `grpc_health_probe` [can be used for Kubernetes][k8s] to health-check gRPC
 servers running in the Pod.
 
@@ -81,7 +81,7 @@ image. Choose a [binary release][rel] and download it in your Dockerfile:
 
 ```bash
 ARG TARGETOS TARGETARCH
-RUN GRPC_HEALTH_PROBE_VERSION=v0.4.38 && \
+RUN GRPC_HEALTH_PROBE_VERSION=<git tag> && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-${TARGETOS}-${TARGETARCH} && \
     chmod +x /bin/grpc_health_probe
 ```
@@ -98,21 +98,21 @@ In your Kubernetes Pod specification manifest, specify a `livenessProbe` and/or
 ```yaml
 spec:
   containers:
-  - name: server
-    image: "[YOUR-DOCKER-IMAGE]"
-    ports:
-    - containerPort: 5000
-    readinessProbe:
-      exec:
-        command: ["/bin/grpc_health_probe", "-addr=:5000"]
-      initialDelaySeconds: 5
-    livenessProbe:
-      exec:
-        command: ["/bin/grpc_health_probe", "-addr=:5000"]
-      initialDelaySeconds: 10
+    - name: server
+      image: "[YOUR-DOCKER-IMAGE]"
+      ports:
+        - containerPort: 5000
+      readinessProbe:
+        exec:
+          command: ["/bin/grpc_health_probe", "-addr=:5000"]
+        initialDelaySeconds: 5
+      livenessProbe:
+        exec:
+          command: ["/bin/grpc_health_probe", "-addr=:5000"]
+        initialDelaySeconds: 10
 ```
 
-This approach provide proper readiness/liveness checking to your applications
+This approach provides proper readiness/liveness checking to your applications
 that implement the [gRPC Health Checking Protocol][hc].
 
 ## Health Checking TLS Servers
@@ -121,77 +121,77 @@ If a gRPC server is serving traffic over TLS, or uses TLS client authentication
 to authorize clients, you can still use `grpc_health_probe` to check health
 with command-line options:
 
-| Option | Description |
-|:------------|-------------|
-| **`-tls`** | use TLS (default: false) |
-| **`-tls-ca-cert`** | path to file containing CA certificates (to override system root CAs) |
-| **`-tls-client-cert`** | client certificate for authenticating to the server |
-| **`-tls-client-key`** | private key for for authenticating to the server |
-| **`-tls-no-verify`** | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
-| **`-tls-server-name`** | override the hostname used to verify the server certificate |
+| Option                 | Description                                                                                    |
+| :--------------------- | ---------------------------------------------------------------------------------------------- |
+| **`-tls`**             | use TLS (default: false)                                                                       |
+| **`-tls-ca-cert`**     | path to file containing CA certificates (to override system root CAs)                          |
+| **`-tls-client-cert`** | client certificate for authenticating to the server                                            |
+| **`-tls-client-key`**  | private key for for authenticating to the server                                               |
+| **`-tls-no-verify`**   | use TLS, but do not verify the certificate presented by the server (INSECURE) (default: false) |
+| **`-tls-server-name`** | override the hostname used to verify the server certificate                                    |
 
 ## Health checking TLS Servers with SPIFFE issued credentials
 
-If your gRPC server requires authentication, you can use the following command line options and set the 
+If your gRPC server requires authentication, you can use the following command line options and set the
 [SPIFFE_ENDPOINT_SOCKET][spiffe-socket]
 environment variable.
 
-| Option | Description |
-|:------------|-------------|
+| Option        | Description                                                                    |
+| :------------ | ------------------------------------------------------------------------------ |
 | **`-spiffe`** | use [SPIFFE Workload API][spiffe] to retrieve TLS credentials (default: false) |
 
 ## Other Available Flags
 
-| Option | Description |
-|:------------|-------------|
-| **`-v`**    | verbose logs (default: false) |
-| **`-connect-timeout`** | timeout for establishing connection |
-| **`-rpc-timeout`** | timeout for health check rpc |
-| **`-rpc-header`** | sends metadata in the RPC request context (default: empty map) |
-| **`-user-agent`** | user-agent header value of health check requests (default: grpc_health_probe) |
-| **`-service`** | service name to check (default: "") - empty string is convention for server health |
-| **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
-| **`-version`** | print the probe version and exit |
+| Option                 | Description                                                                        |
+| :--------------------- | ---------------------------------------------------------------------------------- |
+| **`-v`**               | verbose logs (default: false)                                                      |
+| **`-connect-timeout`** | timeout for establishing connection                                                |
+| **`-rpc-timeout`**     | timeout for health check rpc                                                       |
+| **`-rpc-header`**      | sends metadata in the RPC request context (default: empty map)                     |
+| **`-user-agent`**      | user-agent header value of health check requests (default: grpc_health_probe)      |
+| **`-service`**         | service name to check (default: "") - empty string is convention for server health |
+| **`-gzip`**            | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
+| **`-version`**         | print the probe version and exit                                                   |
 
 **Example:**
 
-1. Start the `route_guide` [example
-   server](https://github.com/grpc/grpc-go/tree/be59908d40f00be3573a50284c3863f1a37b8528/examples/route_guide)
-   with TLS by running:
+1.  Start the `route_guide` [example
+    server](https://github.com/grpc/grpc-go/tree/be59908d40f00be3573a50284c3863f1a37b8528/examples/route_guide)
+    with TLS by running:
 
-       go run server/server.go -tls
+        go run server/server.go -tls
 
-2. Run `grpc_client_probe` with the [CA
-   certificate](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/ca.pem)
-   (in the `testdata/` directory) and hostname override the
-   [cert](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/server1.pem) is signed for:
+2.  Run `grpc_client_probe` with the [CA
+    certificate](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/ca.pem)
+    (in the `testdata/` directory) and hostname override the
+    [cert](https://github.com/grpc/grpc-go/blob/be59908d40f00be3573a50284c3863f1a37b8528/testdata/server1.pem) is signed for:
 
-      ```sh
-      $ grpc_health_probe -addr 127.0.0.1:10000 \
-          -tls \
-          -tls-ca-cert /path/to/testdata/ca.pem \
-          -tls-server-name=example.com \
-          -rpc-header=foo:bar \
-          -rpc-header=foo2:bar2
+    ```sh
+    $ grpc_health_probe -addr 127.0.0.1:10000 \
+        -tls \
+        -tls-ca-cert /path/to/testdata/ca.pem \
+        -tls-server-name=example.com \
+        -rpc-header=foo:bar \
+        -rpc-header=foo2:bar2
 
-      status: SERVING
-      ```
+    status: SERVING
+    ```
 
 ## Exit codes
 
 It is not recommended to rely on specific exit statuses. Any failure will be
 a non-zero exit code.
 
-| Exit Code | Description |
-|:-----------:|-------------|
-| **0** | success: rpc response is `SERVING`. |
-| **1** | failure: invalid command-line arguments |
-| **2** | failure: connection failed or timed out |
-| **3** | failure: rpc failed or timed out |
-| **4** | failure: rpc successful, but the response is not `SERVING` |
-| **20** | failure: could not retrieve TLS credentials using the [SPIFFE Workload API][spiffe] |
+| Exit Code | Description                                                                         |
+| :-------: | ----------------------------------------------------------------------------------- |
+|   **0**   | success: rpc response is `SERVING`.                                                 |
+|   **1**   | failure: invalid command-line arguments                                             |
+|   **2**   | failure: connection failed or timed out                                             |
+|   **3**   | failure: rpc failed or timed out                                                    |
+|   **4**   | failure: rpc successful, but the response is not `SERVING`                          |
+|  **20**   | failure: could not retrieve TLS credentials using the [SPIFFE Workload API][spiffe] |
 
-----
+---
 
 This is not an official Google project.
 
