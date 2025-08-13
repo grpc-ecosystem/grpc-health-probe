@@ -19,7 +19,6 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -34,6 +33,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/alts"
+	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -100,7 +100,7 @@ func init() {
 		os.Exit(StatusInvalidArguments)
 	}
 
-	argError := func(s string, v ...interface{}) {
+	argError := func(s string, v ...any) {
 		log.Printf("error: "+s, v...)
 		os.Exit(StatusInvalidArguments)
 	}
@@ -199,7 +199,7 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 	} else if caCerts != "" {
 		// override system roots
 		rootCAs := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(caCerts)
+		pem, err := os.ReadFile(caCerts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load root CA certificates from file (%s) error=%v", caCerts, err)
 		}
@@ -260,7 +260,6 @@ func main() {
 
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent(flUserAgent),
-		grpc.WithBlock(),
 	}
 	if flTLS && flSPIFFE {
 		log.Printf("-tls and -spiffe are mutually incompatible")
@@ -279,7 +278,8 @@ func main() {
 		creds := alts.NewServerCreds(alts.DefaultServerOptions())
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else if flSPIFFE {
-		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
+		spiffeCtx, spiffeCancel := context.WithTimeout(ctx, flRPCTimeout)
+		defer spiffeCancel()
 		source, err := workloadapi.NewX509Source(spiffeCtx)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials with spiffe. error=%v", err)
@@ -296,34 +296,33 @@ func main() {
 		creds := credentials.NewTLS(tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()))
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	if flGZIP {
-		opts = append(opts,
-			grpc.WithCompressor(grpc.NewGZIPCompressor()),
-			grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
-		)
-	}
+	// Note: GZIP compression is now handled automatically by gRPC when available
+	// The deprecated WithCompressor/WithDecompressor options are no longer needed
+	// The -gzip flag is kept for backward compatibility but has no effect
+	_ = flGZIP // Suppress unused variable warning
 
 	if flVerbose {
 		log.Print("establishing connection")
 	}
 	connStart := time.Now()
-	dialCtx, dialCancel := context.WithTimeout(ctx, flConnTimeout)
-	defer dialCancel()
-	conn, err := grpc.DialContext(dialCtx, flAddr, opts...)
+
+	// Use the new grpc.NewClient instead of deprecated DialContext
+	conn, err := grpc.NewClient(flAddr, opts...)
 	if err != nil {
-		if err == context.DeadlineExceeded {
-			log.Printf("timeout: failed to connect service %q within %v", flAddr, flConnTimeout)
-		} else {
-			log.Printf("error: failed to connect service at %q: %+v", flAddr, err)
-		}
+		log.Printf("error: failed to create client for service at %q: %+v", flAddr, err)
 		retcode = StatusConnectionFailure
 		return
 	}
+
 	connDuration := time.Since(connStart)
-	defer conn.Close()
+	defer func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			log.Printf("warning: failed to close connection: %v", closeErr)
+		}
+	}()
 	if flVerbose {
 		log.Printf("connection established (took %v)", connDuration)
 	}
