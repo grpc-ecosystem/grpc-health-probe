@@ -18,9 +18,9 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Setup Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
-        go-version: '1.24'
+        go-version-file: go.mod
         cache: false
 
     - name: Binary builds with GoReleaser
