@@ -2,6 +2,7 @@
 
 ![ci](https://github.com/grpc-ecosystem/grpc-health-probe/workflows/ci/badge.svg)
 ![GitHub all releases](https://img.shields.io/github/downloads/grpc-ecosystem/grpc-health-probe/total)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/grpc-ecosystem/grpc-health-probe/badge)](https://scorecard.dev/viewer/?uri=github.com/grpc-ecosystem/grpc-health-probe)
 
 The `grpc_health_probe` utility allows you to query health of gRPC services that
 expose service their status through the [gRPC Health Checking Protocol][hc].
