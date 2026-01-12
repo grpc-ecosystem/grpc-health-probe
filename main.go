@@ -33,6 +33,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/alts"
+	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -99,7 +100,7 @@ func init() {
 		os.Exit(StatusInvalidArguments)
 	}
 
-	argError := func(s string, v ...interface{}) {
+	argError := func(s string, v ...any) {
 		log.Printf("error: "+s, v...)
 		os.Exit(StatusInvalidArguments)
 	}
@@ -295,7 +296,7 @@ func main() {
 		creds := credentials.NewTLS(tlsconfig.MTLSClientConfig(source, source, tlsconfig.AuthorizeAny()))
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	if flGZIP {
