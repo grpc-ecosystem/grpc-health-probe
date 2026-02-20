@@ -91,7 +91,7 @@ func init() {
 	flagSet.BoolVar(&flALTS, "alts", false, "use ALTS (default: false, INSECURE plaintext transport)")
 	flagSet.BoolVar(&flVerbose, "v", false, "verbose logs")
 	flagSet.BoolVar(&flVersion, "version", false, "show probe version and exit")
-	flagSet.BoolVar(&flGZIP, "gzip", false, "use GZIPCompressor for requests and GZIPDecompressor for response (default: false)")
+	flagSet.BoolVar(&flGZIP, "gzip", false, "deprecated, gzip compression is automatically used when supported by the server")
 	flagSet.BoolVar(&flSPIFFE, "spiffe", false, "use SPIFFE to obtain mTLS credentials")
 
 	err := flagSet.Parse(os.Args[1:])
@@ -298,11 +298,11 @@ func main() {
 		opts = append(opts, grpc.WithInsecure())
 	}
 
+	// Note: GZIP compression is now handled automatically by gRPC when available
+	// The deprecated WithCompressor/WithDecompressor options are no longer needed
+	// The -gzip flag is kept for backward compatibility but has no effect
 	if flGZIP {
-		opts = append(opts,
-			grpc.WithCompressor(grpc.NewGZIPCompressor()),
-			grpc.WithDecompressor(grpc.NewGZIPDecompressor()),
-		)
+		log.Printf("warning: the -gzip flag is deprecated and no longer has any effect; gRPC compression is negotiated automatically")
 	}
 
 	if flVerbose {
