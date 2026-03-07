@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,7 +75,7 @@ const (
 func init() {
 	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
 	log.SetFlags(0)
-	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect")
+	flagSet.StringVar(&flAddr, "addr", "", "(required) tcp host:port to connect (or env:GRPC_HEALTH_ADDR)")
 	flagSet.StringVar(&flService, "service", "", "service name to check (default: \"\")")
 	flagSet.StringVar(&flUserAgent, "user-agent", "grpc_health_probe", "user-agent header value of health check requests")
 	// timeouts
@@ -110,6 +110,9 @@ func init() {
 		os.Exit(0)
 	}
 
+	if flAddr == "" {
+		flAddr = os.Getenv("GRPC_HEALTH_ADDR")
+	}
 	if flAddr == "" {
 		argError("-addr not specified")
 	}
