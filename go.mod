@@ -2,7 +2,7 @@ module github.com/grpc-ecosystem/grpc-health-probe
 
 go 1.24.0
 
-toolchain go1.25.8
+toolchain go1.25.9
 
 require (
 	github.com/spiffe/go-spiffe/v2 v2.6.0
