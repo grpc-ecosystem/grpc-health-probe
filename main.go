@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 
@@ -248,14 +249,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-c
-		if sig == os.Interrupt {
-			log.Printf("cancellation received")
-			cancel()
-			return
-		}
+		log.Printf("cancellation received (signal: %v)", sig)
+		cancel()
 	}()
 
 	opts := []grpc.DialOption{
