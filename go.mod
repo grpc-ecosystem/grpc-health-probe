@@ -6,7 +6,7 @@ toolchain go1.26.7
 
 require (
 	github.com/spiffe/go-spiffe/v2 v2.8.1
-	google.golang.org/grpc v1.83.0
+	google.golang.org/grpc v1.83.1
 )
 
 require (
