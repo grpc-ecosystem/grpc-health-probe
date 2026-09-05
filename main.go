@@ -28,6 +28,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/grpc-ecosystem/grpc-health-probe/internal/gracefulconn"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc"
@@ -247,6 +248,7 @@ func main() {
 	defer func() { os.Exit(retcode) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -259,6 +261,9 @@ func main() {
 	opts := []grpc.DialOption{
 		grpc.WithUserAgent(flUserAgent),
 		grpc.WithBlock(),
+		// End the connection with FIN/ACK rather than RST, so servers do not
+		// log "connection reset by peer" on every probe (#34).
+		grpc.WithContextDialer(gracefulconn.Dialer(gracefulconn.DefaultDrainTimeout)),
 	}
 	if flTLS && flSPIFFE {
 		log.Printf("-tls and -spiffe are mutually incompatible")
@@ -277,7 +282,8 @@ func main() {
 		creds := alts.NewServerCreds(alts.DefaultServerOptions())
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else if flSPIFFE {
-		spiffeCtx, _ := context.WithTimeout(ctx, flRPCTimeout)
+		spiffeCtx, spiffeCancel := context.WithTimeout(ctx, flRPCTimeout)
+		defer spiffeCancel()
 		source, err := workloadapi.NewX509Source(spiffeCtx)
 		if err != nil {
 			log.Printf("failed to initialize tls credentials with spiffe. error=%v", err)
