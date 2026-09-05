@@ -153,6 +153,10 @@ environment variable.
 | **`-gzip`** | use GZIPCompressor for requests and GZIPDecompressor for response (default: false) |
 | **`-version`** | print the probe version and exit |
 
+The probe connects directly to `-addr`, given as `host:port` or as a
+`unix:` socket path. `HTTP_PROXY`/`HTTPS_PROXY` environment variables are not
+honoured.
+
 **Example:**
 
 1. Start the `route_guide` [example
