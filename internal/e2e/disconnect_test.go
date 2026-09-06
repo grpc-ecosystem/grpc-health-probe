@@ -34,6 +34,11 @@ import (
 // the server sees as "connection reset by peer" and logs on every probe.
 // See grpc-ecosystem/grpc-health-probe#34.
 func TestProbeDisconnectsGracefully(t *testing.T) {
+	// Whether a given disconnect ends in a reset depends on timing, so the
+	// test probes several times. Ten runs keep CI fast and are enough to
+	// catch a regression; when investigating, or to gain confidence that a
+	// change really leaves no resets behind, raise this to 100 or more
+	// locally (each run takes about 0.2s).
 	const runs = 10
 	for _, tc := range []struct {
 		name string
