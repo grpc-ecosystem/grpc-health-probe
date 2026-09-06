@@ -66,36 +66,43 @@ func TestClose_UnreadDataIsNotAReset(t *testing.T) {
 
 // TestClose_DrainsDataSentAfterOurFIN covers a peer that still has something to
 // say after seeing our FIN, like a server replying to GOAWAY or close_notify.
-// The reply must be drained, not answered with RST.
+// The reply must be drained, not answered with RST, whatever its size: the
+// largest case exceeds a loopback socket buffer, so the server's write can only
+// complete because Close keeps reading.
 func TestClose_DrainsDataSentAfterOurFIN(t *testing.T) {
-	ln := listenLoopback(t)
-	serverErr := make(chan error, 1)
-	go func() {
-		c, err := ln.Accept()
-		if err != nil {
-			serverErr <- err
-			return
-		}
-		defer c.Close()
-		buf := make([]byte, 16)
-		_ = c.SetReadDeadline(time.Now().Add(2 * time.Second))
-		if _, err := c.Read(buf); !errors.Is(err, io.EOF) {
-			serverErr <- fmt.Errorf("first read: got %v, want EOF", err)
-			return
-		}
-		if _, err := c.Write([]byte("late reply")); err != nil {
-			serverErr <- fmt.Errorf("late write: %w", err)
-			return
-		}
-		serverErr <- awaitSocketError(c, 200*time.Millisecond)
-	}()
+	for _, size := range []int{1, 10, 4 << 10, 64 << 10, 4 << 20} {
+		t.Run(fmt.Sprintf("%d bytes", size), func(t *testing.T) {
+			ln := listenLoopback(t)
+			serverErr := make(chan error, 1)
+			go func() {
+				c, err := ln.Accept()
+				if err != nil {
+					serverErr <- err
+					return
+				}
+				defer c.Close()
+				buf := make([]byte, 16)
+				_ = c.SetReadDeadline(time.Now().Add(2 * time.Second))
+				if _, err := c.Read(buf); !errors.Is(err, io.EOF) {
+					serverErr <- fmt.Errorf("first read: got %v, want EOF", err)
+					return
+				}
+				_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+				if n, err := c.Write(make([]byte, size)); err != nil || n != size {
+					serverErr <- fmt.Errorf("late write: wrote %d of %d bytes: %v", n, size, err)
+					return
+				}
+				serverErr <- awaitSocketError(c, 200*time.Millisecond)
+			}()
 
-	raw := dialLoopback(t, ln.Addr().String())
-	if err := Wrap(raw, 2*time.Second).Close(); err != nil {
-		t.Fatalf("Close: %v", err)
-	}
-	if err := <-serverErr; err != nil {
-		t.Fatalf("server socket error after writing to a half-closed peer: got %v, want none", err)
+			raw := dialLoopback(t, ln.Addr().String())
+			if err := Wrap(raw, 10*time.Second).Close(); err != nil {
+				t.Fatalf("Close: %v", err)
+			}
+			if err := <-serverErr; err != nil {
+				t.Fatalf("server after writing to a half-closed peer: %v; want the write to complete and no socket error", err)
+			}
+		})
 	}
 }
 
