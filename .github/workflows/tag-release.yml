@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   tag:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -45,7 +46,11 @@ jobs:
         gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$NEW_TAG" -f sha="$(git rev-parse HEAD)"
 
         # A tag created with GITHUB_TOKEN does not start the release workflow
-        # through its push trigger, but a workflow_dispatch does.
-        gh workflow run release.yml --ref "$NEW_TAG"
+        # through its push trigger, but a workflow_dispatch does. If the dispatch
+        # fails, the tag is removed so that the next run tags and releases again.
+        if ! gh workflow run release.yml --ref "$NEW_TAG"; then
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$NEW_TAG"
+          exit 1
+        fi
       env:
         GH_TOKEN: ${{ github.token }}
