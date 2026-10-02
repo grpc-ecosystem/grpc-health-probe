@@ -3,6 +3,8 @@ on:
   push:
     tags:
     - 'v*.*.*'
+  # Started by tag-release.yml, whose tags do not trigger the push event.
+  workflow_dispatch:
 
 permissions: 
   contents: write
@@ -10,6 +12,7 @@ permissions:
 
 jobs:
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
