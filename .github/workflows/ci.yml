@@ -20,13 +20,12 @@ jobs:
         go-version-file: go.mod
     - name: Test
       run: |
+        go vet ./...
         go test -race -cover ./...
         export GOCOVERDIR="$RUNNER_TEMP/covdata"
         mkdir -p "$GOCOVERDIR"
         go test -race ./internal/e2e
         go tool covdata percent -i="$GOCOVERDIR"
-      # Expected to fail until the fix for #34 lands.
-      continue-on-error: true
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
       with:
