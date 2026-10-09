@@ -1,6 +1,6 @@
 module github.com/grpc-ecosystem/grpc-health-probe
 
-go 1.26
+go 1.26.0
 
 toolchain go1.27.2
 
@@ -12,10 +12,10 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260729162451-8efbd57d26e0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
