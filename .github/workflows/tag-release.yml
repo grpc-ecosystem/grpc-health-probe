@@ -1,0 +1,56 @@
+name: Tag patch release
+
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - .github/**
+    - README.md
+    - LICENSE
+  # Dependabot pull requests are merged with GITHUB_TOKEN, and a push made with
+  # GITHUB_TOKEN does not start workflows, so their commits are tagged by the
+  # daily run instead.
+  schedule:
+  - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: tag-release
+
+jobs:
+  tag:
+    if: github.repository == 'grpc-ecosystem/grpc-health-probe' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Tag the next patch version and start the release
+      run: |
+        LATEST=$(git describe --tags --abbrev=0 --match 'v*.*.*')
+        if git diff --quiet "$LATEST" HEAD -- . ':!.github' ':!README.md' ':!LICENSE'; then
+          echo "Nothing to release since $LATEST"
+          exit 0
+        fi
+
+        NEW_TAG="${LATEST%.*}.$((${LATEST##*.}+1))"
+        echo "Tagging $(git rev-parse HEAD) as $NEW_TAG"
+        gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$NEW_TAG" -f sha="$(git rev-parse HEAD)"
+
+        # A tag created with GITHUB_TOKEN does not start the release workflow
+        # through its push trigger, but a workflow_dispatch does. If the dispatch
+        # fails, the tag is removed so that the next run tags and releases again.
+        if ! gh workflow run release.yml --ref "$NEW_TAG"; then
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$NEW_TAG"
+          exit 1
+        fi
+      env:
+        GH_TOKEN: ${{ github.token }}
