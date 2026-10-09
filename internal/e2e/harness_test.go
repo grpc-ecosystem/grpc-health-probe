@@ -98,6 +98,8 @@ type serverConfig struct {
 	handler healthpb.HealthServer
 	// listener overrides the default loopback TCP listener.
 	listener net.Listener
+	// wrapListener, if set, wraps the listener the server accepts on.
+	wrapListener func(net.Listener) net.Listener
 }
 
 type server struct {
@@ -120,6 +122,9 @@ func startHealthServer(t *testing.T, cfg serverConfig) *server {
 		}
 	}
 	srv := &server{addr: ln.Addr().String()}
+	if cfg.wrapListener != nil {
+		ln = cfg.wrapListener(ln)
+	}
 
 	var opts []grpc.ServerOption
 	if cfg.tls {
