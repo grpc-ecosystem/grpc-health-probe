@@ -83,8 +83,10 @@ func TestRPCHeadersAppend(t *testing.T) {
 	if h.Len() != 2 {
 		t.Errorf("Len() = %d, want 2", h.Len())
 	}
-	if s := h.String(); !strings.Contains(s, "foo") || !strings.Contains(s, "bar") {
-		t.Errorf("String() = %q, want both keys mentioned", s)
+	// String() output is not asserted on: since grpc v1.84.0, metadata.MD
+	// redacts non-allowlisted keys, and its format is documented as unstable.
+	if s := h.String(); s == "" {
+		t.Error("String() returned empty string")
 	}
 }
 
