@@ -38,6 +38,7 @@ archives:
 kos:  # See https://goreleaser.com/customization/ko/
   - tags:
     - '{{.Tag}}'
+    creation_time: '{{.CommitTimestamp}}'
     bare: true
     preserve_import_paths: false
     base_image: "gcr.io/distroless/static:nonroot"
