@@ -5,10 +5,15 @@ before:
 builds:
 - main: .
   binary: grpc_health_probe
-  flags: ["-tags=netgo"] # sync changes to .ko.yml
-  ldflags: ["-w -X main.versionTag={{.Version}}"] # sync changes to .ko.yml
+  flags: 
+  - -trimpath
+  - -tags=netgo
+  ldflags: 
+  - -s -w 
+  - -X "main.versionTag={{.Version}}"
   env:
   - CGO_ENABLED=0
+  mod_timestamp: "{{ .CommitTimestamp }}"
   goos:
   - linux
   - darwin
