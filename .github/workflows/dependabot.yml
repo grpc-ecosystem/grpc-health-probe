@@ -3,14 +3,16 @@ name: Dependabot
 on:
   pull_request:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == github.event.pull_request.head.repo.full_name }}
+    permissions:
+      contents: write # gh pr merge: merge the PR into the base branch
+      pull-requests: write # gh pr merge --auto: enable auto-merge on the PR
+
     steps:
     - name: Dependabot metadata
       id: metadata
