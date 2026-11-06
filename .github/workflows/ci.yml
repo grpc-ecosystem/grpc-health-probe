@@ -30,6 +30,9 @@ jobs:
     # The images only COPY the cross-compiled binaries, so no QEMU is needed.
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    # GoReleaser's sboms (.goreleaser.yml) run syft.
+    - name: Install Syft
+      uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
     # Snapshot mode loads one image per platform locally and pushes nothing.
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
