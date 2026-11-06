@@ -55,6 +55,10 @@ dockers_v2:  # See https://goreleaser.com/customization/package/dockers_v2/
     sbom: false
     flags:
     - --provenance=false
+    # Clamp file times in the layer to SOURCE_DATE_EPOCH: GoReleaser's build
+    # context and COPY's parent directory carry the build time. --push merges
+    # into this output; unpack=false lets Docker Desktop's image store --load it.
+    - --output=type=image,rewrite-timestamp=true,unpack=false
     images:
     - '{{ .Env.IMAGE_REPO }}'
     tags:
