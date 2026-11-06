@@ -1,0 +1,13 @@
+# Mirrors .gitignore; .git stays, go build stamps the version from it.
+.vscode
+grpc_health_probe
+grpc-health-probe
+out/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out

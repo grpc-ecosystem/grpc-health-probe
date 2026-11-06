@@ -27,10 +27,19 @@ jobs:
         mkdir -p "$GOCOVERDIR"
         go test -race ./internal/e2e
         go tool covdata percent -i="$GOCOVERDIR"
+    # The images only COPY the cross-compiled binaries, so no QEMU is needed.
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    # Snapshot mode loads one image per platform locally and pushes nothing.
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
       with:
         version: latest
-        args: release --snapshot --clean --skip ko
+        args: release --snapshot --clean
       env:
-        KO_DOCKER_REPO: "dummy"
+        IMAGE_REPO: grpc-health-probe-ci
+    - name: Smoke test images
+      run: |
+        docker run --rm "$(docker images --format '{{.Repository}}:{{.Tag}}' grpc-health-probe-ci | grep -- -amd64$)" -version
+        docker build --load -t grpc-health-probe-ci:dockerfile .
+        docker run --rm grpc-health-probe-ci:dockerfile -version
