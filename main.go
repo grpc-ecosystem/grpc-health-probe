@@ -30,6 +30,7 @@ import (
 
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
+	_ "golang.org/x/crypto/x509roots/fallback" // embedded root CAs for images without a system CA bundle
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -221,7 +222,12 @@ func probeVersion() string {
 	version := "vcs info was not included in build"
 	dirty := ""
 
+	tag := versionTag
 	if info, ok := debug.ReadBuildInfo(); ok {
+		// without ldflags, fall back to the module version go stamps from git or go install
+		if tag == "" && info.Main.Version != "(devel)" {
+			tag = info.Main.Version
+		}
 		for _, setting := range info.Settings {
 
 			switch setting.Key {
@@ -236,8 +242,8 @@ func probeVersion() string {
 		version = version + " (dirty)"
 	}
 
-	if versionTag != "" {
-		version = fmt.Sprintf("%s; %s", versionTag, version)
+	if tag != "" {
+		version = fmt.Sprintf("%s; %s", tag, version)
 	}
 	return version
 }
