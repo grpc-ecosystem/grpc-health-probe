@@ -7,10 +7,11 @@ on:
 
 permissions: {}
 
-# A new push to a PR cancels its older runs; master runs always complete.
+# A new push to a PR cancels its older runs. Every other run gets a group of its
+# own: a shared one would let a newer queued master run replace an older one.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   test:
