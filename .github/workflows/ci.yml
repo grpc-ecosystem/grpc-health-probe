@@ -37,11 +37,14 @@ jobs:
         # $RACE is unquoted so that it disappears where it's empty.
         # shellcheck disable=SC2086
         go test $RACE -cover ./...
-        export GOCOVERDIR="$RUNNER_TEMP/covdata"
-        mkdir -p "$GOCOVERDIR"
-        # shellcheck disable=SC2086
-        go test $RACE ./internal/e2e
-        go tool covdata percent -i="$GOCOVERDIR"
+        # The e2e tests are unix-only; on Windows they'd leave no coverage data.
+        if [ "$RUNNER_OS" != Windows ]; then
+          export GOCOVERDIR="$RUNNER_TEMP/covdata"
+          mkdir -p "$GOCOVERDIR"
+          # shellcheck disable=SC2086
+          go test $RACE ./internal/e2e
+          go tool covdata percent -i="$GOCOVERDIR"
+        fi
 
   ci:
     runs-on: ubuntu-latest
