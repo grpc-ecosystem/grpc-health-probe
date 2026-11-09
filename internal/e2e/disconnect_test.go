@@ -12,19 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build unix
+//go:build unix || windows
 
 package e2e
 
 import (
 	"errors"
+	"flag"
 	"io"
 	"net"
 	"strings"
-	"syscall"
+	"sync"
 	"testing"
 	"time"
 )
+
+// Whether a given disconnect ends in a reset depends on timing, so the test
+// probes several times. Ten runs keep CI fast and are enough to catch a
+// regression; when investigating, or to gain confidence that a change really
+// leaves no resets behind, pass -disconnect-runs=100 or more (each run takes
+// about 0.2s).
+var disconnectRuns = flag.Int("disconnect-runs", 10, "probe runs per case in TestProbeDisconnectsGracefully")
 
 // TestProbeDisconnectsGracefully runs the probe against a health server and
 // checks how the server experiences the probe's disconnect. A well-behaved
@@ -34,12 +42,7 @@ import (
 // the server sees as "connection reset by peer" and logs on every probe.
 // See grpc-ecosystem/grpc-health-probe#34.
 func TestProbeDisconnectsGracefully(t *testing.T) {
-	// Whether a given disconnect ends in a reset depends on timing, so the
-	// test probes several times. Ten runs keep CI fast and are enough to
-	// catch a regression; when investigating, or to gain confidence that a
-	// change really leaves no resets behind, raise this to 100 or more
-	// locally (each run takes about 0.2s).
-	const runs = 10
+	runs := *disconnectRuns
 	for _, tc := range []struct {
 		name string
 		tls  bool
@@ -63,57 +66,28 @@ func TestProbeDisconnectsGracefully(t *testing.T) {
 			for i := 0; i < runs; i++ {
 				code, out := runProbe(t, args...)
 				if code != 0 || !strings.Contains(out, "status: SERVING") {
-					t.Fatalf("run %d: exit %d, output:\n%s", i, code, out)
+					t.Fatalf("run %d (after %d resets): exit %d, output:\n%s", i, resets, code, out)
 				}
 				select {
 				case err := <-disconnects:
-					if isReset(err) {
+					switch {
+					case isReset(err):
 						resets++
 						t.Logf("run %d: server saw a reset on probe disconnect: %v", i, err)
+					case !errors.Is(err, io.EOF):
+						// Neither a FIN nor a reset, e.g. the linger timed out.
+						t.Errorf("run %d: server saw no clean FIN on probe disconnect: %v", i, err)
 					}
 				case <-time.After(5 * time.Second):
-					t.Fatalf("run %d: server never closed the probe's connection", i)
+					t.Fatalf("run %d (after %d resets): server never closed the probe's connection", i, resets)
 				}
 			}
+			t.Logf("%d of %d probe disconnects ended in a reset", resets, runs)
 			if resets > 0 {
 				t.Errorf("server saw a TCP reset on %d of %d probe disconnects; want a clean FIN every time", resets, runs)
 			}
 		})
 	}
-}
-
-// isReset reports whether err is what a server observes when the peer answered
-// with a TCP RST. Linux records EPIPE instead of ECONNRESET when the RST
-// arrives after the server has already seen the peer's FIN.
-func isReset(err error) bool {
-	return errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE)
-}
-
-// pendingSocketError returns the error the kernel has queued on c (SO_ERROR),
-// or nil. It is the one way to observe an RST that arrived after the peer's
-// FIN: once FIN has been delivered, read() returns EOF without reporting it.
-func pendingSocketError(c net.Conn) error {
-	sc, ok := c.(syscall.Conn)
-	if !ok {
-		return nil
-	}
-	rc, err := sc.SyscallConn()
-	if err != nil {
-		return err
-	}
-	var v int
-	if cerr := rc.Control(func(fd uintptr) {
-		v, err = syscall.GetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_ERROR)
-	}); cerr != nil {
-		return cerr
-	}
-	if err != nil {
-		return err
-	}
-	if v == 0 {
-		return nil
-	}
-	return syscall.Errno(v)
 }
 
 // recordingListener wraps accepted connections in recordingConn.
@@ -144,12 +118,47 @@ type recordingConn struct {
 	net.Conn
 	disconnects chan<- error
 	closed      bool
+
+	mu sync.Mutex
+	// reset is the first reset the server's own reads and writes returned.
+	// Once a read has reported it, the socket reads EOF and SO_ERROR is
+	// clear, so linger alone would take the disconnect for a clean one.
+	reset error
+}
+
+func (c *recordingConn) Read(b []byte) (int, error) {
+	n, err := c.Conn.Read(b)
+	c.noteReset(err)
+	return n, err
+}
+
+func (c *recordingConn) Write(b []byte) (int, error) {
+	n, err := c.Conn.Write(b)
+	c.noteReset(err)
+	return n, err
+}
+
+func (c *recordingConn) noteReset(err error) {
+	if !isReset(err) {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.reset == nil {
+		c.reset = err
+	}
 }
 
 func (c *recordingConn) Close() error {
 	if !c.closed {
 		c.closed = true
-		c.disconnects <- c.linger()
+		err := c.linger()
+		c.mu.Lock()
+		if c.reset != nil {
+			err = c.reset
+		}
+		c.mu.Unlock()
+		c.disconnects <- err
 	}
 	return c.Conn.Close()
 }
