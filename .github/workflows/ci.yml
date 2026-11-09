@@ -72,9 +72,16 @@ jobs:
         export GOCOVERDIR="$RUNNER_TEMP/covdata"
         mkdir -p "$GOCOVERDIR"
         # shellcheck disable=SC2086
-        go test $RACE ./internal/e2e
+        go test $RACE ./internal/e2e -skip '^TestProbeDisconnectsGracefully$'
         go tool covdata percent -i="$GOCOVERDIR"
-      # Expected to fail until the fix for #34 lands.
+    # The reproducer for #34 fails until the fix lands; only this step may fail.
+    - name: Disconnect reproducer (#34)
+      shell: bash
+      env:
+        RACE: ${{ matrix.race }}
+      run: |
+        # shellcheck disable=SC2086
+        go test $RACE ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v
       continue-on-error: true
 
   build:
