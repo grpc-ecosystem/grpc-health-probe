@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build unix
-
 package e2e
 
 import (
@@ -32,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -53,6 +52,9 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	probeBin = filepath.Join(dir, "grpc-health-probe")
+	if runtime.GOOS == "windows" {
+		probeBin += ".exe" // exec runs only files with an executable extension
+	}
 	buildArgs := []string{"build", "-o", probeBin}
 	if os.Getenv("GOCOVERDIR") != "" {
 		// Instrument the probe so that every run writes coverage data to
