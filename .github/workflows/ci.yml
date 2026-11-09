@@ -1,13 +1,30 @@
 name: ci
 on:
   push:
+    branches: [master]
   pull_request:
+  workflow_dispatch:
 
 permissions: {}
 
+# A new push to a PR cancels its older runs; master runs always complete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  ci:
-    runs-on: ubuntu-latest
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-latest, macos-26-intel, windows-latest]
+        race: [-race]
+        include:
+        - os: windows-11-arm # the race detector doesn't support windows/arm64
+          race: ''
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     permissions:
       contents: read # git checkout
 
@@ -21,12 +38,35 @@ jobs:
       with:
         go-version-file: go.mod
     - name: Test
+      shell: bash
+      env:
+        RACE: ${{ matrix.race }}
       run: |
-        go test -race -cover ./...
+        # $RACE is unquoted so that it disappears where it's empty. The e2e
+        # package runs once, below, with the probe's coverage collected.
+        # shellcheck disable=SC2046,SC2086
+        go test $RACE -cover $(go list ./... | grep -v /internal/e2e)
         export GOCOVERDIR="$RUNNER_TEMP/covdata"
         mkdir -p "$GOCOVERDIR"
-        go test -race ./internal/e2e
+        # shellcheck disable=SC2086
+        go test $RACE ./internal/e2e
         go tool covdata percent -i="$GOCOVERDIR"
+
+  build:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read # git checkout
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Setup Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: go.mod
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
       with:
@@ -34,3 +74,22 @@ jobs:
         args: release --snapshot --clean --skip ko
       env:
         KO_DOCKER_REPO: "dummy"
+
+  # The required status check on master: passes only if every build and test
+  # job did. always() makes it fail instead of being skipped, which counts as
+  # passing, when a job it needs failed.
+  ci:
+    needs: [build, test]
+    if: always()
+    runs-on: ubuntu-slim
+    permissions: {}
+
+    steps:
+    - name: Check job results
+      env:
+        RESULTS: ${{ join(needs.*.result, ' ') }}
+      run: |
+        echo "$RESULTS"
+        for result in $RESULTS; do
+          [ "$result" = success ] || exit 1
+        done
