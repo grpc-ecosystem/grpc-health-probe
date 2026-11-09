@@ -4,6 +4,10 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      disconnect-runs:
+        description: Probe runs per case in TestProbeDisconnectsGracefully, logged verbosely
+        type: number
 
 permissions: {}
 
@@ -79,9 +83,10 @@ jobs:
       shell: bash
       env:
         RACE: ${{ matrix.race }}
+        DISCONNECT_RUNS: ${{ inputs.disconnect-runs }} # set only by manual runs
       run: |
         # shellcheck disable=SC2086
-        go test $RACE ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v
+        go test $RACE ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS}
       continue-on-error: true
 
   build:
