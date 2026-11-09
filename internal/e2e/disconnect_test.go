@@ -117,7 +117,11 @@ const lingerAfterEOF = 100 * time.Millisecond
 type recordingConn struct {
 	net.Conn
 	disconnects chan<- error
-	closed      bool
+
+	// closeOnce makes a concurrent second Close wait for the first, so that
+	// it cannot close the socket while the first is still in linger.
+	closeOnce sync.Once
+	closeErr  error
 
 	mu sync.Mutex
 	// reset is the first reset the server's own reads and writes returned.
@@ -150,8 +154,7 @@ func (c *recordingConn) noteReset(err error) {
 }
 
 func (c *recordingConn) Close() error {
-	if !c.closed {
-		c.closed = true
+	c.closeOnce.Do(func() {
 		err := c.linger()
 		c.mu.Lock()
 		if c.reset != nil {
@@ -159,8 +162,9 @@ func (c *recordingConn) Close() error {
 		}
 		c.mu.Unlock()
 		c.disconnects <- err
-	}
-	return c.Conn.Close()
+		c.closeErr = c.Conn.Close()
+	})
+	return c.closeErr
 }
 
 // linger reads until an error. On EOF it keeps watching the socket for a
