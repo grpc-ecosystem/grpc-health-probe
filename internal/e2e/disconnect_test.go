@@ -66,7 +66,7 @@ func TestProbeDisconnectsGracefully(t *testing.T) {
 			for i := 0; i < runs; i++ {
 				code, out := runProbe(t, args...)
 				if code != 0 || !strings.Contains(out, "status: SERVING") {
-					t.Fatalf("run %d (after %d resets): exit %d, output:\n%s", i, resets, code, out)
+					t.Fatalf("%s run %d (after %d resets): exit %d, output:\n%s", tc.name, i, resets, code, out)
 				}
 				select {
 				case err := <-disconnects:
@@ -79,10 +79,10 @@ func TestProbeDisconnectsGracefully(t *testing.T) {
 						t.Errorf("run %d: server saw no clean FIN on probe disconnect: %v", i, err)
 					}
 				case <-time.After(5 * time.Second):
-					t.Fatalf("run %d (after %d resets): server never closed the probe's connection", i, resets)
+					t.Fatalf("%s run %d (after %d resets): server never closed the probe's connection", tc.name, i, resets)
 				}
 			}
-			t.Logf("%d of %d probe disconnects ended in a reset", resets, runs)
+			t.Logf("%s: %d of %d probe disconnects ended in a reset", tc.name, resets, runs)
 			if resets > 0 {
 				t.Errorf("server saw a TCP reset on %d of %d probe disconnects; want a clean FIN every time", resets, runs)
 			}
