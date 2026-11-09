@@ -7,18 +7,24 @@ on:
 
 permissions: {}
 
+# A new push to a PR cancels its older runs; master runs always complete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-26.04-arm, macos-latest, macos-26-intel, windows-latest]
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-latest, macos-26-intel, windows-latest]
         race: [-race]
         include:
         - os: windows-11-arm # the race detector doesn't support windows/arm64
           race: ''
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     permissions:
       contents: read # git checkout
 
@@ -36,9 +42,10 @@ jobs:
       env:
         RACE: ${{ matrix.race }}
       run: |
-        # $RACE is unquoted so that it disappears where it's empty.
-        # shellcheck disable=SC2086
-        go test $RACE -cover ./...
+        # $RACE is unquoted so that it disappears where it's empty. The e2e
+        # package runs once, below, with the probe's coverage collected.
+        # shellcheck disable=SC2046,SC2086
+        go test $RACE -cover $(go list ./... | grep -v /internal/e2e)
         export GOCOVERDIR="$RUNNER_TEMP/covdata"
         mkdir -p "$GOCOVERDIR"
         # shellcheck disable=SC2086
@@ -46,7 +53,8 @@ jobs:
         go tool covdata percent -i="$GOCOVERDIR"
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
     permissions:
       contents: read # git checkout
 
@@ -73,7 +81,7 @@ jobs:
   ci:
     needs: [build, test]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions: {}
 
     steps:

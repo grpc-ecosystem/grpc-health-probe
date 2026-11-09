@@ -8,7 +8,7 @@ permissions: {}
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write # GoReleaser: create the GitHub release and upload assets
       packages: write # ko: push container images to ghcr.io
