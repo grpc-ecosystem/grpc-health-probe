@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build unix
-
 package e2e
 
 import (
@@ -21,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -194,7 +193,12 @@ func TestUnixSocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	startHealthServer(t, serverConfig{listener: ln})
-	code, out := runProbe(t, "-addr", "unix://"+path)
+	target := "unix://" + path
+	if runtime.GOOS == "windows" {
+		// unix://C:\... doesn't parse as a URL; unix:<path> takes the path as is.
+		target = "unix:" + path
+	}
+	code, out := runProbe(t, "-addr", target)
 	if code != 0 || !strings.Contains(out, "status: SERVING") {
 		t.Fatalf("exit %d, output:\n%s", code, out)
 	}
