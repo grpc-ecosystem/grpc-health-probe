@@ -85,18 +85,20 @@ jobs:
       shell: bash
       env:
         RACE: ${{ matrix.race }}
+        GOARCH: ${{ matrix.goarch }}
+        GOARM: ${{ matrix.goarm }}
         DISCONNECT_RUNS: ${{ inputs.disconnect-runs }} # set only by manual runs
-        RUNNER_LABEL: ${{ matrix.os }}
       run: |
         log="$RUNNER_TEMP/disconnect.log"
         status=0
         # shellcheck disable=SC2086
         go test $RACE -count=1 ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS} 2>&1 | tee "$log" || status=$?
         # A failure leaves a warning on the run page with the reset counts, and
-        # where a case stopped early, per case.
+        # where a case stopped early, per case. It has no title, so the run page
+        # heads it with the job's name.
         if [ "$status" -ne 0 ]; then
           results=$(sed -nE 's/^ *disconnect_test\.go:[0-9]+: ((plaintext|tls)(:| run [0-9]+ \(after)[^:]*).*/\1/p' "$log")
-          echo "::warning title=Disconnect reproducer (#34) on $RUNNER_LABEL::$(echo "$results" | paste -sd ';' - | sed 's/;/; /g')"
+          echo "::warning::Disconnect reproducer (#34): $(echo "$results" | paste -sd ';' - | sed 's/;/; /g')"
         fi
         exit "$status"
       continue-on-error: true
