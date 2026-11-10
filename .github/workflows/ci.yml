@@ -75,8 +75,10 @@ jobs:
         go test $RACE -cover $(go list ./... | grep -v /internal/e2e)
         export GOCOVERDIR="$RUNNER_TEMP/covdata"
         mkdir -p "$GOCOVERDIR"
+        # -count=1 turns off test caching: the e2e tests build the probe in a
+        # subprocess, so a change to the probe alone would replay a cached pass.
         # shellcheck disable=SC2086
-        go test $RACE ./internal/e2e -skip '^TestProbeDisconnectsGracefully$'
+        go test $RACE -count=1 ./internal/e2e -skip '^TestProbeDisconnectsGracefully$'
         go tool covdata percent -i="$GOCOVERDIR"
     # The reproducer for #34 fails until the fix lands; only this step may fail.
     - name: Disconnect reproducer (#34)
@@ -89,7 +91,7 @@ jobs:
         log="$RUNNER_TEMP/disconnect.log"
         status=0
         # shellcheck disable=SC2086
-        go test $RACE ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS} 2>&1 | tee "$log" || status=$?
+        go test $RACE -count=1 ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS} 2>&1 | tee "$log" || status=$?
         # A failure leaves a warning on the run page with the reset counts, and
         # where a case stopped early, per case.
         if [ "$status" -ne 0 ]; then
