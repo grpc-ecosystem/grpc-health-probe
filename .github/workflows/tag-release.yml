@@ -36,7 +36,7 @@ jobs:
 
     - name: Tag the next patch version and start the release
       run: |
-        LATEST=$(git describe --tags --abbrev=0 --match 'v*.*.*')
+        LATEST=$(git describe --tags --abbrev=0 --match 'v*.*.*' --exclude '*-*')
         if git diff --quiet "$LATEST" HEAD -- . ':!.github' ':!README.md' ':!LICENSE'; then
           echo "Nothing to release since $LATEST"
           exit 0
