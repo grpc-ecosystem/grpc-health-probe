@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   test:
-    name: test (${{ matrix.os }})
+    name: test (${{ matrix.os }}${{ matrix.goarch && format(', {0}', matrix.goarch) || '' }})
     strategy:
       fail-fast: false
       matrix:
@@ -24,6 +24,16 @@ jobs:
         include:
         - os: windows-11-arm # the race detector doesn't support windows/arm64
           race: ''
+        # The Linux architectures that get a release binary but have no hosted
+        # runner. go test cross-compiles the tests and the probe for them: 386
+        # runs natively on the x64 runner, the rest under QEMU user-mode
+        # emulation. The race detector can't be cross-compiled without a C
+        # toolchain, and doesn't support 386 and arm at all.
+        - {os: ubuntu-26.04, goarch: '386', race: ''}
+        - {os: ubuntu-26.04, goarch: arm, goarm: '6', race: ''} # GOARM as in .goreleaser.yml
+        - {os: ubuntu-26.04, goarch: ppc64le, race: ''}
+        - {os: ubuntu-26.04, goarch: riscv64, race: ''}
+        - {os: ubuntu-26.04, goarch: s390x, race: ''}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -38,10 +48,22 @@ jobs:
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: go.mod
+        # The cache key holds the runner's architecture, not GOARCH: without
+        # this, a cross-compiling job could save its build cache under the key
+        # the native ubuntu-26.04 jobs restore.
+        cache: ${{ !matrix.goarch }}
+    - name: Set up QEMU
+      if: matrix.goarch && matrix.goarch != '386'
+      uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      with:
+        platforms: ${{ matrix.goarch }}
     - name: Test
       shell: bash
       env:
         RACE: ${{ matrix.race }}
+        # Empty outside the cross-compiling entries, which Go reads as unset.
+        GOARCH: ${{ matrix.goarch }}
+        GOARM: ${{ matrix.goarm }}
       run: |
         # $RACE is unquoted so that it disappears where it's empty. The e2e
         # package runs once, below, with the probe's coverage collected.
