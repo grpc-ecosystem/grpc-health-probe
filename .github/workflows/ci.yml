@@ -91,8 +91,10 @@ jobs:
       run: |
         log="$RUNNER_TEMP/disconnect.log"
         status=0
+        # A manual run with many probes outlasts go test's default 10 minutes
+        # under emulation, so it gets a longer timeout along with its run count.
         # shellcheck disable=SC2086
-        go test $RACE -count=1 ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS} 2>&1 | tee "$log" || status=$?
+        go test $RACE -count=1 ./internal/e2e -run '^TestProbeDisconnectsGracefully$' -v ${DISCONNECT_RUNS:+-disconnect-runs=$DISCONNECT_RUNS -timeout=25m} 2>&1 | tee "$log" || status=$?
         # A failure leaves a warning on the run page with the reset counts, and
         # where a case stopped early, per case. It has no title, so the run page
         # heads it with the job's name.
