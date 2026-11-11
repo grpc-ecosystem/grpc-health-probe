@@ -11,7 +11,7 @@ ARG BINARY_FROM=build
 # Builds with the newer of the image's Go and go.mod's toolchain line, which
 # Go downloads if needed: the image's default GOTOOLCHAIN=local would ignore
 # go.mod. git lets go build stamp the commit and module version from .git.
-FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf AS build
 RUN apk add --no-cache git
 WORKDIR /src
 COPY go.mod go.sum ./
