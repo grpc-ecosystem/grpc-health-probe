@@ -33,10 +33,12 @@ COPY ${TARGETPLATFORM}/grpc_health_probe /grpc_health_probe
 FROM ${BINARY_FROM} AS bin
 
 # The static binary and the CA bundle, where Go looks for it. The user is
-# numeric, so no /etc/passwd is needed. The path is the one ko used, which
-# `COPY --from=ghcr.io/grpc-ecosystem/grpc-health-probe` in the README relies on.
+# numeric, so no /etc/passwd is needed. The path and PATH are the ones ko used:
+# `COPY --from=ghcr.io/grpc-ecosystem/grpc-health-probe` in the README relies
+# on the first, running `grpc-health-probe` by its bare name on the second.
 FROM scratch
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=bin /grpc_health_probe /ko-app/grpc-health-probe
+ENV PATH=/ko-app
 USER 65532:65532
 ENTRYPOINT ["/ko-app/grpc-health-probe"]
