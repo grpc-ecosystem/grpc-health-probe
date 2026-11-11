@@ -10,7 +10,7 @@ ARG BINARY_FROM=build
 
 # Root CAs for -tls without -tls-ca-cert. alpine's base image holds the bundle,
 # which is the same file on every architecture.
-FROM --platform=$BUILDPLATFORM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS certs
+FROM --platform=$BUILDPLATFORM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS certs
 
 # Builds with the newer of the image's Go and go.mod's toolchain line, which
 # Go downloads if needed: the image's default GOTOOLCHAIN=local would ignore
