@@ -1,0 +1,14 @@
+# Mirrors .gitignore; .git stays, go build stamps the version from it. The **/
+# makes a pattern match at any depth, as it does in .gitignore without it.
+**/.vscode
+**/grpc_health_probe
+**/grpc-health-probe
+**/out
+**/dist
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
