@@ -69,6 +69,7 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
         GOARM: ${{ matrix.goarm }}
       run: |
+        go vet ./...
         # $RACE is unquoted so that it disappears where it's empty. The e2e
         # package runs once, below, with the probe's coverage collected.
         # shellcheck disable=SC2046,SC2086
@@ -80,7 +81,8 @@ jobs:
         # shellcheck disable=SC2086
         go test $RACE -count=1 ./internal/e2e -skip '^TestProbeDisconnectsGracefully$'
         go tool covdata percent -i="$GOCOVERDIR"
-    # The reproducer for #34 fails until the fix lands; only this step may fail.
+    # The test for #34 runs on its own so that a failure leaves a warning with its
+    # reset counts.
     - name: Disconnect reproducer (#34)
       shell: bash
       env:
@@ -103,7 +105,6 @@ jobs:
           echo "::warning::Disconnect reproducer (#34): $(echo "$results" | paste -sd ';' - | sed 's/;/; /g')"
         fi
         exit "$status"
-      continue-on-error: true
 
   build:
     runs-on: ubuntu-26.04
