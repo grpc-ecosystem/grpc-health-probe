@@ -55,7 +55,9 @@ kos:  # See https://goreleaser.com/customization/ko/
     - linux/s390x
 
 release:
-  # A tag with a semver pre-release suffix (v0.4.62-dev.pr354.1) leaves "Latest" where it is.
+  # A tag with a semver pre-release suffix (v0.4.62-dev.pr354.1) is published as a pre-release and leaves "Latest"
+  # where it is.
+  prerelease: auto
   make_latest: '{{ not .Prerelease }}'
   footer: |
     **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Tag }}`
