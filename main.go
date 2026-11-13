@@ -218,28 +218,47 @@ func buildCredentials(skipVerify bool, caCerts, clientCert, clientKey, serverNam
 var versionTag = "" // set from git tag via ldflags during build
 
 func probeVersion() string {
-	version := "vcs info was not included in build"
+	info, _ := debug.ReadBuildInfo()
+	return formatVersion(versionTag, info)
+}
+
+// formatVersion builds the -version output from the ldflags tag and the build
+// info, which is nil when the binary carries none. It prints whichever of the
+// tag and the commit it knows, and says so only when it knows neither.
+func formatVersion(tag string, info *debug.BuildInfo) string {
+	commit := ""
 	dirty := ""
 
-	if info, ok := debug.ReadBuildInfo(); ok {
+	if info != nil {
+		// Without ldflags, fall back to the module version Go stamps from git or
+		// go install, in the form GoReleaser passes: no "v" prefix. "+dirty"
+		// goes too, since " (dirty)" below already says it.
+		if tag == "" && info.Main.Version != "(devel)" {
+			tag = strings.TrimSuffix(strings.TrimPrefix(info.Main.Version, "v"), "+dirty")
+		}
 		for _, setting := range info.Settings {
 
 			switch setting.Key {
 			case "vcs.revision":
-				version = "commit " + setting.Value
+				commit = "commit " + setting.Value
 			case "vcs.modified":
 				dirty = setting.Value
 			}
 		}
 	}
-	if dirty == "true" {
-		version = version + " (dirty)"
+	if commit != "" && dirty == "true" {
+		commit += " (dirty)"
 	}
 
-	if versionTag != "" {
-		version = fmt.Sprintf("%s; %s", versionTag, version)
+	switch {
+	case tag == "" && commit == "":
+		return "vcs info was not included in build"
+	case commit == "":
+		return tag
+	case tag == "":
+		return commit
 	}
-	return version
+	return tag + "; " + commit
 }
 
 func main() {
