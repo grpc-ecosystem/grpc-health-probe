@@ -158,8 +158,8 @@ func TestProbeVersion(t *testing.T) {
 	saved := versionTag
 	defer func() { versionTag = saved }()
 	versionTag = "v1.2.3"
-	if v := probeVersion(); !strings.HasPrefix(v, "v1.2.3; ") {
-		t.Errorf("probeVersion() with tag = %q, want prefix \"v1.2.3; \"", v)
+	if v := probeVersion(); !strings.HasPrefix(v, "v1.2.3") {
+		t.Errorf("probeVersion() with tag = %q, want prefix \"v1.2.3\"", v)
 	}
 }
 
@@ -176,9 +176,10 @@ func TestFormatVersion(t *testing.T) {
 		want string
 	}{
 		{"no build info", "", nil, "vcs info was not included in build"},
-		{"ldflags tag only", "v1.2.3", nil, "v1.2.3; vcs info was not included in build"},
+		{"ldflags tag only", "v1.2.3", nil, "v1.2.3"},
 		{"module version", "", build("v0.4.62", rev), "0.4.62; commit abc123"},
-		{"module version from go install", "", build("v0.4.62"), "0.4.62; vcs info was not included in build"},
+		{"module version from go install", "", build("v0.4.62"), "0.4.62"},
+		{"devel without vcs info", "", build("(devel)"), "vcs info was not included in build"},
 		{"devel is not a version", "", build("(devel)", rev), "commit abc123"},
 		{"ldflags tag wins", "1.2.3", build("v0.4.62", rev), "1.2.3; commit abc123"},
 		{"dirty", "", build("v0.4.62+dirty", rev, dirty), "0.4.62; commit abc123 (dirty)"},

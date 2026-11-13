@@ -223,9 +223,10 @@ func probeVersion() string {
 }
 
 // formatVersion builds the -version output from the ldflags tag and the build
-// info, which is nil when the binary carries none.
+// info, which is nil when the binary carries none. It prints whichever of the
+// tag and the commit it knows, and says so only when it knows neither.
 func formatVersion(tag string, info *debug.BuildInfo) string {
-	version := "vcs info was not included in build"
+	commit := ""
 	dirty := ""
 
 	if info != nil {
@@ -239,20 +240,25 @@ func formatVersion(tag string, info *debug.BuildInfo) string {
 
 			switch setting.Key {
 			case "vcs.revision":
-				version = "commit " + setting.Value
+				commit = "commit " + setting.Value
 			case "vcs.modified":
 				dirty = setting.Value
 			}
 		}
 	}
-	if dirty == "true" {
-		version = version + " (dirty)"
+	if commit != "" && dirty == "true" {
+		commit += " (dirty)"
 	}
 
-	if tag != "" {
-		version = fmt.Sprintf("%s; %s", tag, version)
+	switch {
+	case tag == "" && commit == "":
+		return "vcs info was not included in build"
+	case commit == "":
+		return tag
+	case tag == "":
+		return commit
 	}
-	return version
+	return tag + "; " + commit
 }
 
 func main() {
