@@ -23,13 +23,16 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/x509roots/fallback/bundle"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -190,6 +193,50 @@ func TestFormatVersion(t *testing.T) {
 				t.Errorf("formatVersion(%q, …) = %q, want %q", tc.tag, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestEmbeddedRoots checks that without a system CA bundle, as in the scratch
+// image, the system pool holds the roots embedded by the fallback import. The
+// roots load once per process, so the check runs in a child test process.
+func TestEmbeddedRoots(t *testing.T) {
+	if os.Getenv("EMBEDDED_ROOTS_CHILD") == "1" {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+		n := 0
+		for root := range bundle.Roots() {
+			if root.Constraint != nil {
+				continue
+			}
+			cert, err := x509.ParseCertificate(root.Certificate)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Checked as of the root's own start date: the bundle is frozen at
+			// the version in go.mod, and its roots expire one by one.
+			if _, err := cert.Verify(x509.VerifyOptions{Roots: pool, CurrentTime: cert.NotBefore}); err != nil {
+				t.Errorf("embedded root %q not trusted: %v", cert.Subject, err)
+			}
+			n++
+		}
+		if n == 0 {
+			t.Fatal("no embedded roots")
+		}
+		return
+	}
+
+	empty := t.TempDir()
+	cmd := exec.Command(os.Args[0], "-test.run=^TestEmbeddedRoots$")
+	cmd.Env = append(os.Environ(), "EMBEDDED_ROOTS_CHILD=1", "SSL_CERT_FILE="+filepath.Join(empty, "none.pem"), "SSL_CERT_DIR="+empty)
+	if runtime.GOOS != "linux" {
+		// The platform verifier would trust the roots on its own; make Go use
+		// the fallback pool instead, as it does on Linux without a CA bundle.
+		cmd.Env = append(cmd.Env, "GODEBUG=x509usefallbackroots=1")
+	}
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("child test failed: %v\n%s", err, out)
 	}
 }
 
