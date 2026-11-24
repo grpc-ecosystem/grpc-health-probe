@@ -40,17 +40,27 @@ archives:
   - formats: [ binary ]
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}"
 
-kos:  # See https://goreleaser.com/customization/ko/
-  - tags:
-    - '{{.Tag}}'
-    creation_time: '{{.CommitTimestamp}}'
-    bare: true
-    preserve_import_paths: false
-    base_image: "gcr.io/distroless/static:nonroot"
+dockers_v2:  # See https://goreleaser.com/customization/package/dockers_v2/
+  - dockerfile: Dockerfile
+    build_args:
+      BINARY_FROM: prebuilt
+      SOURCE_DATE_EPOCH: '{{ .CommitTimestamp }}'  # image creation time
+    # buildx's provenance and SBOM would vary the digest (build ID, timestamps).
+    sbom: false
+    flags:
+    - --provenance=false
+    # Clamp file times in the layer to SOURCE_DATE_EPOCH: GoReleaser's build
+    # context and COPY's parent directory carry the build time. --push merges
+    # into this output; unpack=false lets Docker Desktop's image store --load it.
+    - --output=type=image,rewrite-timestamp=true,unpack=false
+    images:
+    - '{{ .Env.IMAGE_REPO }}'
+    tags:
+    - '{{ .Tag }}'
     platforms:
     - linux/amd64
-    - linux/arm/v7
-    - linux/arm64/v8
+    - linux/arm/v6
+    - linux/arm64
     - linux/ppc64le
     - linux/s390x
 
@@ -60,7 +70,7 @@ release:
   prerelease: auto
   make_latest: '{{ not .Prerelease }}'
   footer: |
-    **Container Image** in [{{ .Env.KO_DOCKER_REPO }}](https://{{ .Env.KO_DOCKER_REPO }}): `{{ .Env.KO_DOCKER_REPO }}:{{ .Tag }}`
+    **Container Image** in [{{ .Env.IMAGE_REPO }}](https://{{ .Env.IMAGE_REPO }}): `{{ .Env.IMAGE_REPO }}:{{ .Tag }}`
 
     **Full Changelog**: https://github.com/grpc-ecosystem/grpc-health-probe/compare/{{ .PreviousTag }}...{{ .Tag }}
 
