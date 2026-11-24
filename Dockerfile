@@ -15,7 +15,7 @@ FROM --platform=$BUILDPLATFORM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e
 # Builds with the newer of the image's Go and go.mod's toolchain line, which
 # Go downloads if needed: the image's default GOTOOLCHAIN=local would ignore
 # go.mod. git lets go build stamp the commit and module version from .git.
-FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280 AS build
 RUN apk add --no-cache git
 WORKDIR /src
 COPY go.mod go.sum ./
