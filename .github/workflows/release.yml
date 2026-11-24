@@ -12,6 +12,8 @@ jobs:
     permissions:
       contents: write # GoReleaser: create the GitHub release and upload assets
       packages: write # GoReleaser: push container images to ghcr.io
+      id-token: write # sign the attestations with Sigstore
+      attestations: write # store the attestations
 
     steps:
     - name: Checkout
@@ -33,6 +35,9 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    # GoReleaser's sboms (.goreleaser.yml) and the image SBOM below run syft.
+    - name: Install Syft
+      uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
 
     - name: Binary builds with GoReleaser
       uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
@@ -42,3 +47,61 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         IMAGE_REPO: "ghcr.io/${{ github.repository }}"
+
+    # Signed SLSA provenance and SBOM, kept outside the image (buildx's own are
+    # off in .goreleaser.yml) so the image digest stays reproducible.
+    # Verify with: gh attestation verify <file or oci://image:tag> -R grpc-ecosystem/grpc-health-probe
+    # (add --predicate-type https://spdx.dev/Document for the image SBOM)
+    - name: Attest binaries
+      id: attest-binaries
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-checksums: dist/checksums.txt
+    - name: Resolve image digest
+      id: image
+      env:
+        IMAGE: "ghcr.io/${{ github.repository }}:${{ github.ref_name }}"
+      run: |
+        # Assigned first: inside echo's arguments a failed lookup would go unnoticed.
+        digest=$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}')
+        echo "digest=$digest" >> "$GITHUB_OUTPUT"
+    - name: Attest image
+      uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-name: ghcr.io/${{ github.repository }}
+        subject-digest: ${{ steps.image.outputs.digest }}
+        push-to-registry: true
+    # Every platform image holds the same binary built for another arch, so
+    # the linux/amd64 SBOM stands for the index.
+    - name: Image SBOM
+      env:
+        IMAGE: "ghcr.io/${{ github.repository }}@${{ steps.image.outputs.digest }}"
+      run: syft "registry:$IMAGE" --platform linux/amd64 --output spdx-json="$RUNNER_TEMP/grpc_health_probe-image.sbom.json"
+    - name: Attest image SBOM
+      uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+      with:
+        subject-name: ghcr.io/${{ github.repository }}
+        subject-digest: ${{ steps.image.outputs.digest }}
+        sbom-path: ${{ runner.temp }}/grpc_health_probe-image.sbom.json
+        push-to-registry: true
+    # Release assets: the image SBOM next to the per-binary ones, and the
+    # binaries' provenance bundle for verification without GitHub's API.
+    - name: Upload image SBOM and provenance bundle
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BUNDLE: ${{ steps.attest-binaries.outputs.bundle-path }}
+      run: |
+        cp "$BUNDLE" "$RUNNER_TEMP/checksums.txt.sigstore.json"
+        gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+          "$RUNNER_TEMP/grpc_health_probe-image.sbom.json" \
+          "$RUNNER_TEMP/checksums.txt.sigstore.json"
+    # GoReleaser left the release as a draft (.goreleaser.yml). It goes public
+    # only here, once everything its notes point to exists.
+    - name: Publish release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # A tag with a semver pre-release suffix (v0.4.62-dev.1) leaves "Latest" where it is.
+        latest=true
+        case "$GITHUB_REF_NAME" in *-*) latest=false ;; esac
+        gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest="$latest"
